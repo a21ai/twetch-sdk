@@ -1,0 +1,109 @@
+import { PrivateKey, PublicKey, ECIES } from '../../../pkg/node'
+import { assert, util } from 'chai'
+import Aes from 'aes-js'
+
+import bsv from 'bsv'
+
+function aesCBCEncrypt(plainText, kE, iV) {
+	const plainBytes = Aes.padding.pkcs7.pad(Aes.utils.hex.toBytes(plainText))
+	const aes = new Aes.ModeOfOperation.cbc(kE, iV)
+	const encryptedBytes = aes.encrypt(plainBytes)
+	const encryptedHex = Aes.utils.hex.fromBytes(encryptedBytes)
+	return encryptedHex
+}
+
+function aesCBCDecrypt(encryptedHex, kE, iV) {
+	const encryptedBytes = Aes.utils.hex.toBytes(encryptedHex).slice(37, -32)
+	const aes = new Aes.ModeOfOperation.cbc(kE, iV)
+	const plainBytes = Aes.padding.pkcs7.strip(aes.decrypt(encryptedBytes))
+	const plainText = Aes.utils.hex.fromBytes(plainBytes)
+	return plainText
+}
+
+function eciesEphemeralEncrypt(plainText, publicKey, r) {
+	const rN = r.bn
+	const k = bsv.PublicKey(publicKey).point
+	const P = k.mul(rN)
+	const hash = bsv.crypto.Hash.sha512(bsv.PublicKey(P).toBuffer())
+	const iV = hash.slice(0, 16)
+	const kE = hash.slice(16, 32)
+	const kM = hash.slice(32, 64)
+	const encryptedText = aesCBCEncrypt(plainText, kE, iV)
+	const encryptedBytes = Buffer.from(encryptedText, 'hex')
+	const msgBuf = Buffer.concat([Buffer.from('BIE1'), r.publicKey.toDER(true), encryptedBytes])
+	const hmac = bsv.crypto.Hash.sha256hmac(msgBuf, kM)
+	return {
+		cipherText_js: Buffer.concat([msgBuf, hmac]).toString('hex'),
+		hash_js: hash.toString('hex')
+	}
+}
+
+function eciesEphemeralDecrypt(encryptedHex, hash) {
+	const buf = Buffer.from(hash, 'hex')
+	const iV = buf.slice(0, 16)
+	const kE = buf.slice(16, 32)
+
+	return aesCBCDecrypt(encryptedHex, kE, iV)
+}
+
+describe('encryption', () => {
+	it('eciesEphemeralEncrypt', () => {
+		const args = [
+			'1LoveF7qQijpjascPytHor2uSEEjHHH8YB',
+			'',
+			'twetch',
+			'#{invoice}',
+			'|',
+			'15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva',
+			'BITCOIN_ECDSA',
+			'#{myAddress}',
+			'#{mySignature}'
+		]
+
+		const plainText = 'hello world'
+		const plainTextBuf = Buffer.from(plainText)
+		const randPriv_js = bsv.PrivateKey.fromRandom()
+		const wif = 'L1BSMMgzBFNks4F4MWBzSya3duwPdd6crGyHsGxXV52bu6fTA37E'
+
+		const start_js = new Date()
+
+		const script_js = new bsv.Script()
+		for (let each of args) {
+			script.add(Buffer.from(each))
+		}
+		const scriptHex = script.toHex()
+
+		const priv_js = new bsv.PrivateKey.fromString(wif)
+		const pub_js = priv_js.toPublicKey()
+		const { cipherText_js, hash_js } = eciesEphemeralEncrypt(
+			plainTextBuf.toString('hex'),
+			pub_js,
+			randPriv_js
+		)
+		const end_js = new Date()
+
+		const priv_wasm = PrivateKey.fromWIF(wif)
+		const pub_wasm = priv_wasm.getPublicKey()
+		const randPriv_wasm = PrivateKey.fromWIF(randPriv_js.toString())
+
+		const cipherText = ECIES.encrypt(plainTextBuf, randPriv_wasm, pub_wasm, false)
+		const cipherKeys = ECIES.deriveCipherKeys(randPriv_wasm, pub_wasm)
+		const hash_wasm = Buffer.concat([
+			cipherKeys.get_iv(),
+			cipherKeys.get_ke(),
+			cipherKeys.get_km()
+		]).toString('hex')
+		const cipherText_wasm = Buffer.from(cipherText.toBytes()).toString('hex')
+
+		const end_wasm = new Date()
+
+		console.log(`js runtime: ${end_js.getTime() - start_js.getTime()}ms`)
+		console.log(`wasm runtime: ${end_wasm.getTime() - end_js.getTime()}ms`)
+
+		assert.equal(priv_js.toString(), priv_wasm.toWIF())
+		assert.equal(randPriv_js.toString(), randPriv_wasm.toWIF())
+		assert.equal(pub_js.toString(), pub_wasm.toHex())
+		assert.equal(cipherText_js, cipherText_wasm)
+		assert.equal(hash_js, hash_wasm)
+	})
+})
