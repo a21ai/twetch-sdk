@@ -11,6 +11,7 @@ impl Post {
 
 #[wasm_bindgen]
 impl Post {
+    // JS Implementation - https://gitlab.com/twetch/shared-helpers/-/blob/master/post.js#L403
     #[wasm_bindgen(js_name = estimateUsd)]
     pub fn estimate_usd(description: String, exchange_rate: f32) -> f32 {
         if (description.chars().count() <= 0) {
