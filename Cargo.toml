@@ -29,6 +29,9 @@ wasm-bindgen-test = "0.3.20"
 cc = "1.0"
 cargo-web = "0.6.26"
 
+[patch.crates-io]
+wasm-bindgen = { git = "https://github.com/bsvwasm/wasm-bindgen", branch = "universal-ui64-patch" }
+
 [build]
 rustflags = ["-C", "target-feature=+simd128"]
 
