@@ -1,39 +1,52 @@
-use wasm_bindgen::{prelude::*, JsValue, throw_str};
+use crate::commands::PayCommand;
+use crate::mentions::Mentions;
 use serde::*;
-use regex::Regex;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Post {}
-
-impl Post {
+pub struct Post {
+    description: String,
 }
 
 #[wasm_bindgen]
 impl Post {
-    // JS Implementation - https://gitlab.com/twetch/shared-helpers/-/blob/master/post.js#L403
+    #[wasm_bindgen(js_name = fromDescription)]
+    pub fn from_description(description: String) -> Post {
+        return Post { description };
+    }
+
     #[wasm_bindgen(js_name = estimateUsd)]
-    pub fn estimate_usd(description: String, exchange_rate: f32) -> f32 {
-        if (description.chars().count() <= 0) {
-            return 0.0;
+    pub fn estimate_usd(&self, exchange_rate: f64) -> f64 {
+        if self.description.chars().count() <= 0 {
+            return 0.00f64;
         }
 
-        let mut sum = 0.02;
+        let mut sum = 0.02f64;
 
-        let PAY_ANY = Regex::new(r"(\/[pP][aA][yY])\s+((\@\d+\s+)|([a-zA-Z\-\_\d]+@[a-zA-Z\-\_\d\.]+[a-zA-Z\d]\s+)|([1][a-km-zA-HJ-NP-Z\d]{25,34}\s+)|([$][a-zA-Z\d-_.]{4,50}\s+)|([1][a-zA-Z\d]+\s+))+(((((\d{1,8})?(\.\d{1,8}))|((\d{1,8})(\.\d{1,8})?))\s*([bB][sS][vV]))|([$][\d]+(\.[\d]+)?))").unwrap();
+        sum += match PayCommand::from_string(&self.description) {
+            None => 0f64,
+            Some(pay_command) => pay_command.get_amount_usd(&exchange_rate),
+        };
 
-        let pay_match = PAY_ANY.find(&description).unwrap().as_str();
+        sum += match Mentions::from_string(&self.description) {
+            None => 0f64,
+            Some(mentions) => mentions.estimate_usd,
+        };
 
-        if (pay_match.chars().count() > 0) {
-            sum += 1.0;
-            //let PAY_ANY_CURRENCY = Regex::new(r"/((((\d{1,8})?\.\d{1,8})|(\d{1,8}(\.\d{1,8})?))\s*[bB][sS][vV])|([$][\d]*(\.[\d]+)?)/g").unwrap();
-            //let PAY_ANY_CURRENCY_BSV = Regex::new(r"/(((\d{1,8})?\.\d{1,8})|(\d{1,8}(\.\d{1,8})?))\s*[bB][sS][vV]/g").unwrap();
-            //let PAY_ANY_CURRENCY_USD = Regex::new(r"/([$][\d]*(\.[\d]+)?)/g").unwrap();
+        return format!("{:.1$}", sum, 2).parse::<f64>().unwrap();
+    }
 
-            //for (cap in PAY_ANY_CURRENCY.capture_iter(text) {
-            //}
-        }
+    #[wasm_bindgen(js_name = getPayCommand)]
+    pub fn get_pay_command(&self, exchange_rate: f64) -> Option<String> {
+        let pay_command = match PayCommand::from_string(&self.description) {
+            None => return None,
+            Some(p) => p,
+        };
 
-        return sum;
+        let bsv = pay_command.get_amount_bsv(&exchange_rate);
+        let usd = pay_command.get_amount_usd(&exchange_rate);
+
+        return Some("".to_string());
     }
 }

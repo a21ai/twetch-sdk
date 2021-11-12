@@ -7,17 +7,20 @@ description = "rust twetch sdk with wasm builds"
 license = "MIT"
 categories = ['no-std']
 
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-bsv-wasm = {git = "https://github.com/Firaenix/bsv-wasm.git", branch="master"}
-#bsv-wasm = "1.1.0"
+#bsv-wasm = {git = "https://github.com/Firaenix/bsv-wasm.git", branch="master"}
+bsv-wasm = "1.2.0-beta.4"
 hex = "0.4.3"
 utf-8 = "0.7.6"
 wasm-bindgen = { version = "0.2.73", features = ["serde-serialize"] }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 regex = "1"
+js-sys = "0.3.53"
+base64 = "0.13.0"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.20"

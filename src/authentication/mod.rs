@@ -1,10 +1,11 @@
-use wasm_bindgen::{prelude::*, JsValue, throw_str};
+use bsv_wasm::{hash::Hash, AESAlgorithms, PBKDF2Hashes, AES, KDF};
+use js_sys::decode_uri_component;
 use serde::*;
-use bsv_wasm::{ PBKDF2Hashes, hash::Hash, KDF, AES, AESAlgorithms };
-use hex::FromHexError;
-use hex::*;
+use std::str;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+
 pub struct Authentication {}
 
 #[wasm_bindgen]
@@ -12,7 +13,8 @@ pub struct Authentication {}
 pub struct AuthenticationCipher {
     email_hash: String,
     cipher: String,
-    password_hash: String
+    password_hash: String,
+    cipher_hash: Vec<u8>,
 }
 
 #[wasm_bindgen]
@@ -33,35 +35,59 @@ impl AuthenticationCipher {
     }
 }
 
-impl Authentication {
-    //pub fn decrypt_mnemonic_impl(cipher: String, encryptedMnemonic: String) -> Result<Vec<u8>, FromHexError> {
-        //let key = hex::decode(cipher)?;
-        //let iv = hex::decode("00000000000000000000000000000001")?;
-        //let message = hex::decode(encryptedMnemonic)?;
-
-        //return AES::decrypt(&key, &iv, &message, AESAlgorithms::AES256_CTR)
-
-        ////return message;
-    //}
-}
-
 #[wasm_bindgen]
 impl Authentication {
     #[wasm_bindgen(js_name = getCipher)]
     pub fn get_cipher(email: String, password: String) -> AuthenticationCipher {
         let email_hash = Hash::sha_256(email.as_bytes()).to_hex();
-        let cipher = KDF::pbkdf2(password.as_bytes().into(), Some(email_hash.as_bytes().into()), PBKDF2Hashes::SHA256, 10000, 32).get_hash().to_hex();
-        let password_hash = Hash::sha_256(cipher.as_bytes()).to_hex();
+        let cipher = KDF::pbkdf2(
+            password.as_bytes().into(),
+            Some(email_hash.as_bytes().into()),
+            PBKDF2Hashes::SHA256,
+            10000,
+            32,
+        )
+        .get_hash();
 
-        let response = AuthenticationCipher { email_hash, password_hash, cipher };
+        let password_hash = Hash::sha_256(cipher.to_hex().as_bytes()).to_hex();
+
+        let response = AuthenticationCipher {
+            email_hash,
+            password_hash,
+            cipher: cipher.to_hex(),
+            cipher_hash: cipher.to_bytes(),
+        };
+
         return response;
     }
+}
 
-    //#[wasm_bindgen(js_name = decrypteMnemonic)]
-    //pub fn decrypt_mnemonic(cipher: String, encryptedMnemonic: String) -> Result<Vec<u8>, JsValue> {
-        //match Authentication::decrypt_mnemonic_impl(cipher, encryptedMnemonic) {
-            //Ok(v) => Ok(v),
-            //Err(e) => throw_str(&e.to_string()),
-        //}
-    //}
+#[wasm_bindgen]
+impl AuthenticationCipher {
+    #[wasm_bindgen(js_name = decryptMnemonic)]
+    pub fn decrypt_mnemonic(&self, encrypted_mnemonic: String) -> Option<String> {
+        let iv = &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+
+        let decrypted = match AES::decrypt(
+            &self.cipher_hash,
+            iv,
+            encrypted_mnemonic.as_bytes(),
+            AESAlgorithms::AES128_CTR,
+        ) {
+            Ok(v) => v,
+            Err(_) => return Some("error decrypting".to_string()),
+        };
+
+        let utf8 = match str::from_utf8(&decrypted) {
+            Ok(v) => v,
+            Err(_) => return Some("error utf8".to_string()),
+        };
+
+        //let decoded_utf8 = match decode_uri_component(&utf8) {
+        //Ok(v) => v,
+        //Err(_) => return Some("error decode uri".to_string()),
+        //};
+
+        return Some(utf8.into());
+    }
 }
