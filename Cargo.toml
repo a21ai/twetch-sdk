@@ -12,8 +12,8 @@ categories = ['no-std']
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-#bsv-wasm = {git = "https://github.com/Firaenix/bsv-wasm.git", branch="master"}
-bsv-wasm = "1.2.0-beta.4"
+bsv-wasm = {git = "https://github.com/Firaenix/bsv-wasm.git", branch="master"}
+#bsv-wasm = "1.2.0-beta.4"
 hex = "0.4.3"
 utf-8 = "0.7.6"
 wasm-bindgen = { version = "0.2.73", features = ["serde-serialize"] }

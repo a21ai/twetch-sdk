@@ -12,3 +12,6 @@ test-node:
 
 install-custom-wasm:
 	cargo install --git https://github.com/bsvwasm/wasm-bindgen --branch universal-ui64-patch wasm-bindgen-cli
+
+build:
+	make build-nodejs; make build-web; make build-bundler;
