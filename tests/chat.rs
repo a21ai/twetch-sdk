@@ -4,7 +4,7 @@ mod chat_tests {
 
     #[tokio::test]
     async fn create_conversation() {
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiMSJ9LCJpYXQiOjE2NTQ3MzY2Nzl9.9-gp1qgDuN2i3InOUj8TWLYmwyZWdBzM2yWV78uWpyQ".to_string();
+        let token = "".to_string();
 
         println!("token {:?}", token);
 
@@ -15,10 +15,7 @@ mod chat_tests {
         println!("{:?}", conversation);
 
         let message = conversation
-            .create_message(
-                token.clone(),
-                "https://myorders.co/tracking/33347406/92612903099748541400011858".to_string(),
-            )
+            .create_message(token.clone(), "hello world".to_string())
             .await
             .unwrap();
 
