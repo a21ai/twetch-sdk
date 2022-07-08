@@ -44,8 +44,8 @@ impl Post {
             Some(p) => p,
         };
 
-        let bsv = pay_command.get_amount_bsv(&exchange_rate);
-        let usd = pay_command.get_amount_usd(&exchange_rate);
+        let _bsv = pay_command.get_amount_bsv(&exchange_rate);
+        let _usd = pay_command.get_amount_usd(&exchange_rate);
 
         return Some("".to_string());
     }

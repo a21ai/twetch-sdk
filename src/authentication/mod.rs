@@ -1,5 +1,4 @@
 use bsv_wasm::{hash::Hash, AESAlgorithms, PBKDF2Hashes, AES, KDF};
-use js_sys::decode_uri_component;
 use serde::*;
 use std::str;
 use wasm_bindgen::prelude::*;
