@@ -1,7 +1,7 @@
 use crate::api::Api;
 use anyhow::Result;
 use bsv_wasm::{AESAlgorithms, AES};
-use js_sys::{decode_uri_component, encode_uri_component};
+use js_sys::decode_uri_component;
 use serde::*;
 use serde_json::json;
 use std::str;
