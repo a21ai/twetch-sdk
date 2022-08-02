@@ -1,22 +1,17 @@
-use crate::commands::PayCommand;
-use crate::mentions::Mentions;
-use serde::*;
-use wasm_bindgen::prelude::*;
+pub mod commands;
+pub mod mentions;
 
-#[wasm_bindgen]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+use crate::post::{commands::PayCommand, mentions::Mentions};
+
 pub struct Post {
     description: String,
 }
 
-#[wasm_bindgen]
 impl Post {
-    #[wasm_bindgen(js_name = fromDescription)]
     pub fn from_description(description: String) -> Post {
         return Post { description };
     }
 
-    #[wasm_bindgen(js_name = estimateUsd)]
     pub fn estimate_usd(&self, exchange_rate: f64) -> f64 {
         if self.description.chars().count() <= 0 {
             return 0.00f64;
@@ -37,7 +32,6 @@ impl Post {
         return format!("{:.1$}", sum, 2).parse::<f64>().unwrap();
     }
 
-    #[wasm_bindgen(js_name = getPayCommand)]
     pub fn get_pay_command(&self, exchange_rate: f64) -> Option<String> {
         let pay_command = match PayCommand::from_string(&self.description) {
             None => return None,

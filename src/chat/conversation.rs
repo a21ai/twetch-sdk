@@ -1,13 +1,9 @@
-use crate::{api::Api, chat::message::Message, wallet::Wallet};
+use crate::{constants, GraphqlApi, Message, Wallet};
 use anyhow::Result;
 use base64;
-use bsv_wasm::{ECIESCiphertext, Hash, PrivateKey, PublicKey, ECIES};
-use serde::*;
+use bsv::{ECIESCiphertext, Hash, PrivateKey, PublicKey, ECIES};
 use serde_json::json;
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Conversation {
     id: String,
     key: String,
@@ -15,7 +11,7 @@ pub struct Conversation {
 
 impl Conversation {
     pub async fn create(token: String, user_ids: Vec<String>) -> Result<Conversation> {
-        let api = Api { token };
+        let api = GraphqlApi::new(constants::GATEWAY_URL.to_string(), token);
         let pubkeys = api
             .list_pubkeys(user_ids.clone())
             .await?
@@ -64,9 +60,7 @@ impl Conversation {
     }
 }
 
-#[wasm_bindgen]
 impl Conversation {
-    #[wasm_bindgen(js_name = generateKey)]
     pub fn generate_key() -> String {
         Hash::sha_256(&PrivateKey::from_random().to_bytes())
             .to_hex()
@@ -76,7 +70,6 @@ impl Conversation {
             .collect()
     }
 
-    #[wasm_bindgen(js_name = encrypt)]
     pub fn encrypt_key(key: String, pubkey: String) -> Option<String> {
         let public_key = match PublicKey::from_hex(&pubkey) {
             Ok(v) => v,
@@ -92,12 +85,11 @@ impl Conversation {
         Some(base64::encode_config(encrypted, base64::STANDARD))
     }
 
-    #[wasm_bindgen(js_name = decrypt)]
     pub fn decrypt_key(encrypted_key: String, seed: String) -> Option<Vec<u8>> {
         let wallet = Wallet::new(seed);
-        let xpriv = match wallet.xpriv_account() {
-            Some(v) => v,
-            None => return None,
+        let private_key = match wallet.account_private_key() {
+            Ok(v) => v,
+            Err(_) => return None,
         };
 
         let encrypted_key_buf = match base64::decode_config(encrypted_key, base64::STANDARD) {
@@ -115,7 +107,7 @@ impl Conversation {
             Err(_) => return None,
         };
 
-        let decrypted = match ECIES::decrypt(&ciphertext, &xpriv.get_private_key(), &pubkey) {
+        let decrypted = match ECIES::decrypt(&ciphertext, &private_key, &pubkey) {
             Ok(v) => v,
             Err(_) => return None,
         };

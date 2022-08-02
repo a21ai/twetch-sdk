@@ -1,15 +1,10 @@
 use regex::Regex;
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-#[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Copy)]
 pub enum Currency {
     BSV,
     USD,
 }
 
-#[wasm_bindgen]
 pub struct PayCommand {
     pub amount: f64,
     pub currency: Currency,

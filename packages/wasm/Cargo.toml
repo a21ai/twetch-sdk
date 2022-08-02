@@ -1,0 +1,49 @@
+[package]
+name = "twetch-sdk-wasm"
+version = "0.0.1"
+authors = ["utxo detective"]
+edition = "2021"
+categories = ['no-std']
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+#bsv-wasm = { version = "1.3.4", features = ["wasm-bindgen-exports"] }
+bsv-wasm = { path = "../../../bsv-wasm/packages/bsv-wasm" }
+js-sys = "0.3.58"
+reqwest = { version = "0.11.0", features = ["json"] }
+serde = { version = "1.0.101", features = ["derive"] }
+serde_derive = "^1.0.59"
+serde_json = "1.0.41"
+twetch-sdk = { path =  "../../" }
+wasm-bindgen = { version = "0.2.81", features = ["serde-serialize"]  }
+wasm-bindgen-futures = "0.4.31"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.20"
+tokio = { version = "1.19.2", features = ["full"]  }
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'Headers',
+  'Request',
+  'RequestInit',
+  'RequestMode',
+  'Response',
+  'Window',
+]
+
+[patch.crates-io]
+wasm-bindgen = { git = "https://github.com/bsvwasm/wasm-bindgen", branch = "universal-ui64-patch" }
+
+[build]
+rustflags = ["-C", "target-feature=+simd128"]
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

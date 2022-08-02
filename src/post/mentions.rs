@@ -10,7 +10,6 @@ impl Mentions {
         let mut estimate_usd = 0.0f64;
 
         for _mat in mentions_regex.find_iter(description) {
-            //println!("mentions match {:?}", mat.as_str());
             estimate_usd += 0.005f64;
         }
 

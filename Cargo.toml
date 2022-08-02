@@ -1,47 +1,21 @@
 [package]
 name = "twetch-sdk"
 version = "0.0.1"
-authors = ["Harry @1"]
-edition = "2018"
-description = "rust twetch sdk with wasm builds"
-license = "MIT"
+authors = ["utxo detective"]
+edition = "2021"
 categories = ['no-std']
 
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
+sigil_types = { path = "../sigil-sdk/crates/types" }
 anyhow = "1"
 base64 = "0.13.0"
-bsv-wasm = { version = "1.3.4" }
+#bsv = { git = "https://github.com/Firaenix/bsv-wasm.git", branch = "split-modules" }
+bsv = { path = "../bsv-wasm" }
 hex = "0.4.3"
 js-sys = "0.3.53"
 regex = "1"
-reqwest = { version = "0.11.10", features = ["json", "rustls-tls"], default-features = false }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-utf-8 = "0.7.6"
+reqwest = { version = "0.11.0", features = ["json"] }
+serde = { version = "^1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = "1"
-wasm-bindgen = { version = "0.2.73", features = ["serde-serialize"] }
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3.20"
-tokio = { version = "1.19.2", features = ["full"]  }
-
-[build-dependencies]
-cc = "1.0"
-cargo-web = "0.6.26"
-
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/bsvwasm/wasm-bindgen", branch = "universal-ui64-patch" }
-
-[build]
-rustflags = ["-C", "target-feature=+simd128"]
-
-[profile.release]
-opt-level = 3
-lto = true
-
-[profile.test]
-opt-level = 3
-debug = false
+utf-8 = "0.7.6"
+tokio = { version = "1", features = ["full"]  }
