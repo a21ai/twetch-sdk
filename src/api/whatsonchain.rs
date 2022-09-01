@@ -1,12 +1,12 @@
 use crate::Networks;
 use anyhow::Result;
-use bsv::{Hash, P2PKHAddress};
+use bsv::P2PKHAddress;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct WhatsOnChainUTXO {
     pub tx_hash: String,
-    pub tx_pos: u64,
+    pub tx_pos: u32,
     pub value: u64,
 }
 
@@ -36,14 +36,13 @@ impl WhatsOnChainApi {
         address: &P2PKHAddress,
         network: &Networks,
     ) -> Result<Vec<WhatsOnChainUTXO>> {
-        let mut scripthash = Hash::sha_256(&address.get_locking_script()?.to_bytes()).to_bytes();
-        scripthash.reverse();
+        let scripthash = address.get_locking_script()?.to_scripthash_hex();
 
         let res = self
             .get(format!(
                 "/v1/bsv/{}/script/{}/unspent",
                 WhatsOnChainApi::network(network),
-                hex::encode(scripthash)
+                scripthash
             ))
             .send()
             .await?

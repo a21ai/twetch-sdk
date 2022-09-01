@@ -1,15 +1,15 @@
 use crate::{constants, MetasyncApi, Networks, WhatsOnChainApi};
 use anyhow::Result;
 use bsv::{P2PKHAddress, PublicKey, Script};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UTXO {
     pub txid: String,
-    pub vout: u64,
+    pub vout: u32,
     pub satoshis: u64,
     pub path: i32,
     pub script: Option<Script>,
-    pub contract: Option<String>,
 }
 
 impl UTXO {
@@ -25,7 +25,6 @@ impl UTXO {
                 satoshis: e.value,
                 path: -1,
                 script: None,
-                contract: None,
             })
             .collect();
 
@@ -45,7 +44,6 @@ impl UTXO {
                 satoshis: e.satoshis.parse::<u64>().unwrap(),
                 path: e.path.parse::<i32>().unwrap(),
                 script: None,
-                contract: None,
             })
             .collect();
 

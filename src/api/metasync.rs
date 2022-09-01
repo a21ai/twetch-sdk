@@ -1,4 +1,4 @@
-use crate::Networks;
+use crate::{Networks, Wallet};
 use anyhow::Result;
 use bsv::{PublicKey, Transaction};
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,7 @@ use serde_json::json;
 #[derive(Debug, Deserialize, Clone)]
 pub struct MetasyncUTXO {
     pub txid: String,
-    pub vout: u64,
+    pub vout: u32,
     pub satoshis: String,
     pub path: String,
 }
@@ -29,7 +29,7 @@ pub struct PaymentDestinationOutput {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PaymentDestination {
+pub struct MetasyncPaymentDestination {
     pub outputs: Vec<PaymentDestinationOutput>,
 }
 
@@ -78,7 +78,10 @@ impl MetasyncApi {
         Ok(res.utxos)
     }
 
-    pub async fn payment_destination(&self, paymail: &String) -> Result<PaymentDestination> {
+    pub async fn payment_destination(
+        &self,
+        paymail: &String,
+    ) -> Result<MetasyncPaymentDestination> {
         let payload = json!({
             "satoshis": 0,
         });
@@ -87,14 +90,26 @@ impl MetasyncApi {
             .json(&payload)
             .send()
             .await?
-            .json::<PaymentDestination>()
+            .json::<MetasyncPaymentDestination>()
             .await?;
         Ok(res)
     }
 
-    pub async fn broadcast(&self, tx: &Transaction) -> Result<Broadcast> {
+    pub async fn broadcast(
+        &self,
+        tx: &Transaction,
+        network: &Networks,
+        wallet: &Wallet,
+    ) -> Result<Broadcast> {
+        anyhow::ensure!(
+            None != wallet.user_id,
+            "MetasyncAPI Error: no user found in wallet"
+        );
+
         let payload = json!({
             "hex": tx.to_hex()?,
+            "network": MetasyncApi::network(network),
+            "metadata": { "sender": format!("{}@twetch.me", &wallet.user_id.clone().unwrap())  }
         });
         let res = self
             .post("/tx".to_string())

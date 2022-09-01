@@ -5,6 +5,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct Authentication(authentication::Authentication);
 
+#[wasm_bindgen]
+pub struct AuthToken(authentication::AuthToken);
+
 #[wasm_bindgen(js_name = AuthenticationCipher)]
 pub struct AuthenticationCipher(authentication::AuthenticationCipher);
 

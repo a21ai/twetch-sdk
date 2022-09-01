@@ -1,7 +1,54 @@
+use anyhow::Result;
 use bsv::{hash::Hash, AESAlgorithms, PBKDF2Hashes, AES, KDF};
+use serde::{Deserialize, Serialize};
 use std::str;
 
 pub struct Authentication {}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthToken {
+    pub token: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthTokenPayload {
+    user: AuthTokenUser,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthTokenUser {
+    id: String,
+}
+
+macro_rules! expect_two {
+    ($iter:expr) => {{
+        let mut i = $iter;
+        match (i.next(), i.next(), i.next()) {
+            (Some(first), Some(second), None) => (first, second),
+            _ => return Err(anyhow::anyhow!("Invalid Token")),
+        }
+    }};
+}
+
+impl AuthToken {
+    pub fn new(token: String) -> Result<AuthToken> {
+        let user = AuthToken::decode(&token)?;
+        Ok(AuthToken {
+            token,
+            user_id: user.id,
+        })
+    }
+
+    pub fn decode(token: &String) -> Result<AuthTokenUser> {
+        let (_, message) = expect_two!(token.rsplitn(2, '.'));
+        let (payload, _) = expect_two!(message.rsplitn(2, '.'));
+        let decoded = base64::decode_config(payload, base64::URL_SAFE_NO_PAD)?;
+        let utf8 = str::from_utf8(&decoded)?.to_string();
+        let token: AuthTokenPayload = serde_json::from_str(&utf8)?;
+        Ok(token.user)
+    }
+}
 
 pub struct AuthenticationCipher {
     pub email_hash: String,

@@ -25,8 +25,6 @@ impl GraphqlApi {
             "query": query
         });
 
-        println!("api payload {:?}", payload);
-
         let res = self
             .client()
             .json(&payload)
@@ -35,11 +33,7 @@ impl GraphqlApi {
             .json::<Value>()
             .await?;
 
-        println!("res {:?}", res);
-
         let data = res.get("data").unwrap().clone();
-
-        println!("data {:?}", data);
 
         Ok(data)
     }

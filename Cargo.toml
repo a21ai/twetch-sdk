@@ -7,10 +7,11 @@ categories = ['no-std']
 
 [dependencies]
 sigil_types = { path = "../sigil-sdk/crates/types" }
+sigil-sdk = { path = "../sigil-sdk" }
 anyhow = "1"
 base64 = "0.13.0"
-#bsv = { git = "https://github.com/Firaenix/bsv-wasm.git", branch = "split-modules" }
-bsv = { path = "../bsv-wasm" }
+bsv = { git = "https://github.com/Firaenix/bsv-wasm.git", branch = "split-modules" }
+#bsv = { path = "../bsv-wasm" }
 hex = "0.4.3"
 js-sys = "0.3.53"
 regex = "1"
@@ -18,4 +19,6 @@ reqwest = { version = "0.11.0", features = ["json"] }
 serde = { version = "^1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = "1"
 utf-8 = "0.7.6"
-tokio = { version = "1", features = ["full"]  }
+
+[dev-dependencies]
+tokio = { version = "1.19.2", features = ["full"]  }
