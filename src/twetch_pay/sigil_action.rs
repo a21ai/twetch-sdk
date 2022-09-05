@@ -24,6 +24,7 @@ impl TokenStore for TestStore {
 impl SigilAction {
     pub async fn run(wallet: &Wallet, call: &TwetchPayCall) -> Result<TwetchPayAction> {
         let mut outputs: Vec<TxBuilderOutput> = Vec::new();
+        let store = TestStore {};
 
         if let Some(args) = &call.args {
             let abi: SigilABI = serde_json::from_value(serde_json::to_value(args)?)?;
@@ -34,12 +35,16 @@ impl SigilAction {
 
             let typed_signing = match abi.method {
                 SigilABIMethods::Transfer => {
-                    let contract = brc721::BRC721Basic {};
+                    let contract = brc721::BRC721Basic {
+                        store: Box::new(store),
+                    };
                     let uto = get_uto(params[0].clone().into()).await?;
                     contract.abi(brc721::ABI::Transfer(uto, params[1].clone().into()))?
                 }
                 SigilABIMethods::Mint => {
-                    let contract = brc721::BRC721Basic {};
+                    let contract = brc721::BRC721Basic {
+                        store: Box::new(store),
+                    };
                     let uto = get_uto(params[0].clone().into()).await?;
                     contract.abi(brc721::ABI::Mint(
                         uto,
@@ -48,7 +53,9 @@ impl SigilAction {
                     ))?
                 }
                 SigilABIMethods::Purchase => {
-                    let contract = brc721::BRC721Basic {};
+                    let contract = brc721::BRC721Basic {
+                        store: Box::new(store),
+                    };
                     let uto = get_uto(params[0].clone().into()).await?;
 
                     let satoshis: u64 = params[2].clone().into();
@@ -81,7 +88,9 @@ impl SigilAction {
                 }
                 SigilABIMethods::Escrow => {
                     auto_fund = false;
-                    let contract = brc721::BRC721Basic {};
+                    let contract = brc721::BRC721Basic {
+                        store: Box::new(store),
+                    };
                     let uto = get_uto(params[0].clone().into()).await?;
                     contract.abi(brc721::ABI::Escrow(
                         uto,
@@ -91,7 +100,6 @@ impl SigilAction {
                 }
                 SigilABIMethods::Vax => {
                     auto_fund = false;
-                    let store = TestStore {};
                     let contract = lizervaxx::LizerVaxx {
                         store: Box::new(store),
                     };
