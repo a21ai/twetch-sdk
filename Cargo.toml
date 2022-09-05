@@ -8,6 +8,7 @@ categories = ['no-std']
 [dependencies]
 sigil_types = { path = "../sigil-sdk/crates/types" }
 sigil-sdk = { path = "../sigil-sdk" }
+async-trait = "0.1.53"
 anyhow = "1"
 base64 = "0.13.0"
 bsv = { git = "https://github.com/Firaenix/bsv-wasm.git", branch = "split-modules" }

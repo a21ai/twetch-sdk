@@ -4,10 +4,22 @@ use crate::{
 };
 use anyhow::Result;
 
+use async_trait::async_trait;
 use sigil_sdk::contracts::{brc721, lizervaxx};
-use sigil_types::Signer;
+use sigil_types::{Outpoint, SigilError, TokenStore, UTO};
 
 pub struct SigilAction {}
+
+pub struct TestStore {}
+
+#[async_trait]
+impl TokenStore for TestStore {
+    async fn get_uto(&self, _outpoint: &Outpoint) -> Result<UTO, SigilError> {
+        Err(SigilError::UTONotFound(
+            "get_uto not implemented".to_string(),
+        ))
+    }
+}
 
 impl SigilAction {
     pub async fn run(wallet: &Wallet, call: &TwetchPayCall) -> Result<TwetchPayAction> {
@@ -16,8 +28,6 @@ impl SigilAction {
         if let Some(args) = &call.args {
             let abi: SigilABI = serde_json::from_value(serde_json::to_value(args)?)?;
 
-            let signer = Signer(None, Some(wallet.account_address()?));
-
             let mut auto_fund = true;
 
             let params = &abi.params;
@@ -25,22 +35,21 @@ impl SigilAction {
             let typed_signing = match abi.method {
                 SigilABIMethods::Transfer => {
                     let contract = brc721::BRC721Basic {};
-                    let uto = get_uto(params[0].clone().into(), abi.contract.to_string()).await?;
-                    contract.abi(brc721::ABI::Transfer(uto, signer, params[1].clone().into()))?
+                    let uto = get_uto(params[0].clone().into()).await?;
+                    contract.abi(brc721::ABI::Transfer(uto, params[1].clone().into()))?
                 }
                 SigilABIMethods::Mint => {
                     let contract = brc721::BRC721Basic {};
-                    let uto = get_uto(params[0].clone().into(), abi.contract.to_string()).await?;
+                    let uto = get_uto(params[0].clone().into()).await?;
                     contract.abi(brc721::ABI::Mint(
                         uto,
-                        signer,
                         params[1].clone().into(),
                         params[2].clone().into(),
                     ))?
                 }
                 SigilABIMethods::Purchase => {
                     let contract = brc721::BRC721Basic {};
-                    let uto = get_uto(params[0].clone().into(), abi.contract.to_string()).await?;
+                    let uto = get_uto(params[0].clone().into()).await?;
 
                     let satoshis: u64 = params[2].clone().into();
 
@@ -63,33 +72,35 @@ impl SigilAction {
                         }
                     }
 
-                    contract.purchase(
+                    contract.abi(brc721::ABI::Purchase(
                         uto,
                         wallet.account_address()?.get_locking_script()?,
                         params[1].clone().into(),
                         satoshis,
-                    )?
+                    ))?
                 }
                 SigilABIMethods::Escrow => {
                     auto_fund = false;
                     let contract = brc721::BRC721Basic {};
-                    let uto = get_uto(params[0].clone().into(), abi.contract.to_string()).await?;
+                    let uto = get_uto(params[0].clone().into()).await?;
                     contract.abi(brc721::ABI::Escrow(
                         uto,
-                        signer,
                         params[1].clone().into(),
                         params[2].clone().into(),
                     ))?
                 }
                 SigilABIMethods::Vax => {
                     auto_fund = false;
-                    let contract = lizervaxx::LizerVaxx {};
+                    let store = TestStore {};
+                    let contract = lizervaxx::LizerVaxx {
+                        store: Box::new(store),
+                    };
 
-                    let frog = get_uto(params[0].clone().into(), abi.contract.to_string()).await?;
-                    let vax = get_uto(params[1].clone().into(), abi.contract.to_string()).await?;
-                    let apu = get_uto(params[2].clone().into(), abi.contract.to_string()).await?;
+                    let frog = get_uto(params[0].clone().into()).await?;
+                    let vax = get_uto(params[1].clone().into()).await?;
+                    let apu = get_uto(params[2].clone().into()).await?;
 
-                    contract.vax(frog, vax, apu, signer)?
+                    contract.vax(frog, vax, apu)?
                 }
             };
 

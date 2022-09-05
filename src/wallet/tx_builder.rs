@@ -52,6 +52,7 @@ pub struct BuiltTx {
     pub payment_destinations: Vec<PaymentDestination>,
     pub encrypted_hash: Option<String>,
     pub nfts: Vec<String>,
+    pub typed_signing: Option<TypedSigning>,
 }
 
 impl TxBuilder {
@@ -238,6 +239,7 @@ impl TxBuilder {
         let mut payment_destinations: Vec<PaymentDestination> = Vec::new();
         let mut encrypted_hash = None;
         let mut nfts: Vec<String> = Vec::new();
+        let mut typed_signing: Option<TypedSigning> = None;
 
         let change_script = match &builder.change_address {
             Some(v) => v.get_locking_script()?,
@@ -350,10 +352,10 @@ impl TxBuilder {
 
         wallet.sign_transaction(&mut tx, &utxos)?;
 
-        if let Some(typed_signing) = &builder.typed_signing {
-            let typed_signing = wallet.sign_typed(&mut typed_signing.clone())?;
+        if let Some(ts) = &builder.typed_signing {
+            let ts = wallet.sign_typed(&mut ts.clone())?;
 
-            for signature in &typed_signing.signatures {
+            for signature in &ts.signatures {
                 if let Some(sig) = &signature.signature {
                     let asm = format!(
                         "{} {} {}",
@@ -368,6 +370,11 @@ impl TxBuilder {
                     tx.set_input(vin, &input);
                 }
             }
+
+            typed_signing = Some(TypedSigning {
+                data: tx.to_compact_bytes()?,
+                signatures: ts.signatures.clone(),
+            });
         }
 
         Ok(BuiltTx {
@@ -378,6 +385,7 @@ impl TxBuilder {
             fee_sats,
             payment_destinations,
             nfts,
+            typed_signing,
         })
     }
 }

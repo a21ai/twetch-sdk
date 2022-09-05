@@ -12,7 +12,7 @@ use bsv::{
     ChainParams, ExtendedPrivateKey, ExtendedPublicKey, P2PKHAddress, PrivateKey, PublicKey,
     Script, SigHash, Transaction, BSM, ECIES,
 };
-use sigil_types::TypedSigning;
+use sigil_types::{TypedSigner, TypedSigning};
 
 #[derive(Clone)]
 pub struct Wallet {
@@ -157,14 +157,17 @@ impl Wallet {
     }
 
     pub fn sign_typed(&self, typed_signing: &mut TypedSigning) -> Result<TypedSigning> {
-        let private_key_account = self.account_private_key()?;
-        let mut private_keys = Vec::new();
-
+        let mut typed_signers = Vec::new();
         for _ in &typed_signing.signatures {
-            private_keys.push(private_key_account.clone());
+            typed_signers.push(TypedSigner {
+                target: self.account_address()?.get_locking_script()?.to_bytes(),
+                pub_key: Some(self.account_public_key()?),
+                priv_key: Some(self.account_private_key()?),
+                r: None,
+                k: None,
+            });
         }
-
-        Ok(typed_signing.sign_all(private_keys, Vec::new())?)
+        Ok(typed_signing.sign_all(typed_signers)?)
     }
 
     pub fn sign_transaction(&self, tx: &mut Transaction, utxos: &Vec<Option<UTXO>>) -> Result<()> {
@@ -183,28 +186,6 @@ impl Wallet {
                 } else {
                     xpriv_wallet.derive(utxo.path as u32)?.get_private_key()
                 };
-
-                //if utxo.script.is_none() {
-                //anyhow::bail!(format!("Missing Locking Script {:?}", utxo));
-                //}
-
-                //// Sigil V2
-                //let signature = tx.sign(
-                //&private_key,
-                //SigHash::InputOutput,
-                //i,
-                //&utxo.script.clone().unwrap(),
-                //utxo.satoshis,
-                //)?;
-                //let asm = format!(
-                //"{} {} {}",
-                //signature.to_hex()?,
-                //private_key.to_public_key()?.to_hex()?,
-                //contract.clone()
-                //);
-                //input.set_locking_script(&utxo.script.clone().unwrap());
-                //input.set_unlocking_script(&Script::from_asm_string(&asm)?);
-                //tx.set_input(i, &input)
 
                 // P2PKH
                 let signature = tx.sign(

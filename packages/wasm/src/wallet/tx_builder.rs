@@ -80,6 +80,12 @@ impl BuiltTx {
         let value = serde_json::to_value(&self.0.nfts).unwrap();
         JsValue::from_serde(&value).unwrap()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn typed_signing(&self) -> JsValue {
+        let value = serde_json::to_value(&self.0.typed_signing).unwrap();
+        JsValue::from_serde(&value).unwrap()
+    }
 }
 
 #[wasm_bindgen]

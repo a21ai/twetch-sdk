@@ -5,6 +5,15 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct MetasyncUTO {
+    pub outpoint: String,
+    pub satoshis: String,
+    pub contract: String,
+    pub token: String,
+    pub script: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct MetasyncUTXO {
     pub txid: String,
     pub vout: u32,
@@ -54,6 +63,22 @@ impl MetasyncApi {
     pub fn post(&self, path: String) -> reqwest::RequestBuilder {
         let client = reqwest::Client::new();
         client.post(format!("{}{}", self.url, path))
+    }
+
+    pub fn get(&self, path: String) -> reqwest::RequestBuilder {
+        let client = reqwest::Client::new();
+        client.get(format!("{}{}", self.url, path))
+    }
+
+    pub async fn uto(&self, outpoint: &String) -> Result<MetasyncUTO> {
+        let res = self
+            .get(format!("/uto/{}", outpoint))
+            .send()
+            .await?
+            .json::<MetasyncUTO>()
+            .await?;
+
+        Ok(res)
     }
 
     pub async fn utxos(
