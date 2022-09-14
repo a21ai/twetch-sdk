@@ -6,11 +6,12 @@ edition = "2021"
 categories = ['no-std']
 
 [dependencies]
-#sigil_types = { path = "../sigil-sdk/crates/types" }
-#sigil-sdk = { path = "../sigil-sdk" }
 sigil-sdk = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }
 sigil_types = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }
 sigil_store = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }
+#sigil-sdk = { path = "../sigil-sdk/" }
+#sigil_types = { path = "../sigil-sdk/crates/types" }
+#sigil_store = { path = "../sigil-sdk/crates/store" }
 async-trait = "0.1.53"
 anyhow = "1"
 base64 = "0.13.0"

@@ -28,7 +28,7 @@ pub struct PayParams {
         serialize = "filesEncryptedHashes"
     ))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub files_encrypted_hashes: Option<String>,
+    pub files_encrypted_hashes: Option<Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

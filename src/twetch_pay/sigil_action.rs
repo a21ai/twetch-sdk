@@ -5,7 +5,7 @@ use crate::{
 use anyhow::Result;
 
 use async_trait::async_trait;
-use sigil_sdk::contracts::{brc721, lizervaxx};
+use sigil_sdk::contracts::{brc721, lizervaxx, slurp_juice};
 use sigil_types::{Outpoint, SigilError, TokenStore, UTO};
 
 pub struct SigilAction {}
@@ -108,7 +108,18 @@ impl SigilAction {
                     let vax = get_uto(params[1].clone().into()).await?;
                     let apu = get_uto(params[2].clone().into()).await?;
 
-                    contract.vax(frog, vax, apu)?
+                    contract.abi(lizervaxx::ABI::Vax(frog, vax, apu)).await?
+                }
+                SigilABIMethods::Slurp => {
+                    auto_fund = false;
+                    let contract = slurp_juice::SlurpJuice {
+                        store: Box::new(store),
+                    };
+
+                    let ape = get_uto(params[0].clone().into()).await?;
+                    let slurp = get_uto(params[1].clone().into()).await?;
+
+                    contract.abi(slurp_juice::ABI::Slurp(ape, slurp)).await?
                 }
             };
 

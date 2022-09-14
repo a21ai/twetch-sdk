@@ -13,6 +13,9 @@ crate-type = ["cdylib", "rlib"]
 #bsv-wasm = { path = "../../../bsv-wasm/packages/bsv-wasm" }
 bsv-wasm = { git = "https://github.com/Firaenix/bsv-wasm.git", branch = "split-modules" }
 #sigil_types = { path = "../../../sigil-sdk/crates/types" }
+#sigil-sdk = { path = "../../../sigil-sdk/" }
+#sigil_types = { path = "../../../sigil-sdk/crates/types" }
+#sigil_store = { path = "../../../sigil-sdk/crates/store" }
 sigil-sdk = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }
 sigil_types = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }
 sigil_store = { git = "https://gitlab+deploy-token-1293088:CbuuHtM8BvVpr6FWnhFP@gitlab.com/twetch/sigil-sdk.git", branch = "master" }

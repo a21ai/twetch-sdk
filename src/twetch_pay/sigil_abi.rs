@@ -25,6 +25,7 @@ pub enum SigilABIMethods {
     Transfer,
     Vax,
     Purchase,
+    Slurp,
 }
 
 impl From<SigilABIParam> for String {

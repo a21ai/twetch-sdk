@@ -12,6 +12,7 @@ pub struct Api {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Payee {
     pub amount: Value,
+    pub sats: Option<u64>,
     pub to: String,
     pub types: Option<Vec<String>>,
     pub user_id: Option<String>,

@@ -53,24 +53,25 @@ impl V1TwetchAction {
                 });
 
                 for payee in &response.payees {
-                    if payee.amount.is_number() {
+                    if let Some(sats) = payee.sats {
                         outputs.push(TxBuilderOutput {
-                            sats: (payee.amount.as_f64().unwrap() * 1e8) as u64,
+                            sats: sats,
                             address: Some(payee.to.clone()),
                             to: None,
                             args: None,
                             encrypt_args: None,
                         })
-                    } else if payee.amount.is_string() && payee.amount.as_str().unwrap() == "change"
-                    {
+                    }
+
+                    if payee.amount.is_string() && payee.amount.as_str().unwrap() == "change" {
                         change_address = Some(P2PKHAddress::from_string(&payee.to)?);
                     }
                 }
             }
         }
 
-        if let Some(mut outputs) = call.outputs.clone() {
-            outputs.append(&mut outputs.clone());
+        if let Some(call_outputs) = call.outputs.clone() {
+            outputs.append(&mut call_outputs.clone());
         }
 
         let built_tx = wallet

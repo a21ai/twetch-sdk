@@ -129,11 +129,8 @@ impl TxBuilder {
             // Addresses
             if let Ok(address) = P2PKHAddress::from_string(to) {
                 tx_outs.push(TxOut::new(output.sats, &address.get_locking_script()?));
-            }
-
-            // User Paymails
-            if to.contains("@") && !to.starts_with("@") {
-                // P2P
+            } else if to.contains("@") && !to.starts_with("@") {
+                // User Paymails
                 if let Ok(p2p_payment_destination) =
                     polynym.p2p_payment_destination(to, output.sats).await
                 {
@@ -282,7 +279,6 @@ impl TxBuilder {
 
         for output in &builder.outputs {
             let res = TxBuilder::resolve_output(output, wallet).await?;
-
             if let Some(p) = res.payment_destination {
                 payment_destinations.push(p);
             }
