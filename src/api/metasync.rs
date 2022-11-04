@@ -89,7 +89,7 @@ impl MetasyncApi {
         let payload = json!({
             "pubkey": public_key.to_hex()?,
             "amount": 1,
-            "newtork": MetasyncApi::network(network)
+            "network": MetasyncApi::network(network)
         });
 
         let res = self

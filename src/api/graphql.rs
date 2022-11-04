@@ -69,10 +69,29 @@ impl GraphqlApi {
         Ok(res)
     }
 
+    pub async fn update_conversation(&self, conversation: String, name: String) -> Result<()> {
+        let query = format!(
+            "mutation updateConversationMutation($conversationId: UUID!  $payload: ConversationPatch!) {{
+                updateConversationById(input: {{
+                    conversationPatch: $payload, id: $conversationId
+                }}) {{ conversation {{ id name icon }} }}
+            }}
+            "
+        );
+
+        self.graphql(
+            query,
+            Some(json!({ "payload": { "name": name }, "conversationId": conversation })),
+        )
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn list_pubkeys(&self, user_ids: Vec<String>) -> Result<Value> {
         let user_ids_string = serde_json::to_value(user_ids).unwrap().to_string();
         let query = format!(
-            "query ListPubkeys {{ allUsers(filter: {{ id: {{ in: {} }} }}) {{ nodes {{ publicKey }} }} }} ",
+            "query ListPubkeys {{ allUsers(filter: {{ id: {{ in: {} }} }}) {{ nodes {{ id publicKey }} }} }} ",
             user_ids_string
         );
         let res = self

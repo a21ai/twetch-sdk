@@ -1,5 +1,5 @@
 use crate::{BuiltTx, Wallet};
-use serde_json::json;
+use serde_json::{json, Value};
 use twetch_sdk::{
     twetch_pay, PublishParams as RPublishParams, TwetchPayActionType as RTwetchPayActionType,
 };
@@ -119,12 +119,12 @@ impl PublishParams {
 #[wasm_bindgen]
 impl TwetchPay {
     pub async fn run(value: JsValue, wallet: Wallet) -> Result<TwetchPayAction, JsValue> {
-        let call = match value.into_serde::<twetch_pay::TwetchPayCall>() {
+        let mut call = match value.into_serde::<twetch_pay::TwetchPayCall>() {
             Ok(v) => v,
             Err(e) => {
                 let payload = json!({
                     "status": 0,
-                    "message": format!("{:?}", e),
+                    "message": format!("{}", e),
                 });
                 return Err(JsValue::from_serde(&payload).unwrap());
             }
@@ -139,7 +139,7 @@ impl TwetchPay {
             Err(e) => {
                 let payload = json!({
                     "status": 1,
-                    "message": format!("{:?}", e),
+                    "message": format!("{}", e),
                 });
                 return Err(JsValue::from_serde(&payload).unwrap());
             }

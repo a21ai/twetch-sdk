@@ -240,7 +240,10 @@ impl TxBuilder {
 
         let change_script = match &builder.change_address {
             Some(v) => v.get_locking_script()?,
-            None => wallet.resolve_change_address().await?,
+            None => match wallet.resolve_change_address().await {
+                Ok(v) => v,
+                Err(_) => anyhow::bail!("failed to resolve change address"),
+            },
         };
 
         let mut tx = match &builder.extended_tx {
@@ -268,9 +271,13 @@ impl TxBuilder {
             let tx_in = tx.get_input(i).unwrap();
 
             let txlog_api = TxlogApi::new(constants::urls::TXLOG_URL.to_string());
-            let satoshis_in = txlog_api
+            let satoshis_in = match txlog_api
                 .satoshis(&tx_in.get_prev_tx_id_hex(None), tx_in.get_vout())
-                .await?;
+                .await
+            {
+                Ok(v) => v,
+                Err(_) => anyhow::bail!("failed to fetch prev tx"),
+            };
 
             input_sats += satoshis_in;
 
@@ -278,7 +285,11 @@ impl TxBuilder {
         }
 
         for output in &builder.outputs {
-            let res = TxBuilder::resolve_output(output, wallet).await?;
+            let res = match TxBuilder::resolve_output(output, wallet).await {
+                Ok(v) => v,
+                Err(_) => anyhow::bail!("failed to resolve output"),
+            };
+
             if let Some(p) = res.payment_destination {
                 payment_destinations.push(p);
             }
@@ -294,7 +305,11 @@ impl TxBuilder {
         }
 
         if builder.auto_fund == true {
-            let wallet_utxos = wallet.utxos(&builder.network).await?;
+            let wallet_utxos = match wallet.utxos(&builder.network, output_sats + 100000).await {
+                Ok(v) => v,
+                Err(_) => anyhow::bail!("failed to fetch utxos"),
+            };
+
             let balance: u64 = wallet_utxos.iter().map(|e| e.satoshis).sum();
             anyhow::ensure!(
                 balance > output_sats,

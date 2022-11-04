@@ -98,8 +98,8 @@ mod wallet_tests {
         let builder = TxBuilder {
             network: Networks::BSV,
             contract: None,
-            contract_sats: None,
             extended_tx: None,
+            typed_signing: None,
             outputs: vec![
                 TxBuilderOutput {
                     sats: 100,

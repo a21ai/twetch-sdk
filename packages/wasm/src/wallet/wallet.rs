@@ -1,4 +1,4 @@
-use crate::{EphemeralCipher, Networks, TypedSigning};
+use crate::{EphemeralCipher, TypedSigning};
 use bsv_wasm::{ExtendedPublicKey, P2PKHAddress, PublicKey, Transaction};
 use twetch_sdk::{wallet, UTXO};
 use wasm_bindgen::{prelude::*, JsValue};
@@ -60,7 +60,7 @@ impl Wallet {
         }
     }
 
-    pub fn display_address(&self, network: Networks) -> Option<String> {
+    pub fn display_address(&self, network: String) -> Option<String> {
         match wallet::Wallet::display_address(&self.0, &network.into()) {
             Ok(v) => Some(v.into()),
             Err(_) => None,
@@ -96,10 +96,7 @@ impl Wallet {
         }
     }
 
-    pub async fn utxos(
-        account_public_key: PublicKey,
-        network: Networks,
-    ) -> Result<JsValue, JsValue> {
+    pub async fn utxos(account_public_key: PublicKey, network: String) -> Result<JsValue, JsValue> {
         let mut utxos = Vec::new();
 
         let address = match account_public_key.to_p2pkh_address() {
@@ -122,7 +119,7 @@ impl Wallet {
 
     pub async fn account_utxos(
         account_address: P2PKHAddress,
-        network: Networks,
+        network: String,
     ) -> Result<JsValue, JsValue> {
         match UTXO::from_woc(&account_address.into(), &network.into()).await {
             Ok(v) => Ok(JsValue::from_serde(&serde_json::to_value(v).unwrap()).unwrap()),
@@ -132,7 +129,7 @@ impl Wallet {
 
     pub async fn wallet_utxos(
         account_public_key: PublicKey,
-        network: Networks,
+        network: String,
     ) -> Result<JsValue, JsValue> {
         match UTXO::from_metasync(&account_public_key.into(), &network.into()).await {
             Ok(v) => Ok(JsValue::from_serde(&serde_json::to_value(v).unwrap()).unwrap()),
@@ -142,7 +139,7 @@ impl Wallet {
 
     pub async fn account_balance(
         account_address: P2PKHAddress,
-        network: Networks,
+        network: String,
     ) -> Result<JsValue, JsValue> {
         match UTXO::from_woc(&account_address.into(), &network.into()).await {
             Ok(v) => {

@@ -81,7 +81,7 @@ impl V1TwetchAction {
                 contract: None,
                 extended_tx: None,
                 typed_signing: None,
-                network: Networks::BSV,
+                network: call.network.clone(),
                 outputs,
             })
             .await?;

@@ -10,14 +10,10 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn encrypt(key: &[u8], plaintext: String) -> Option<String> {
+    pub fn encrypt(key: &[u8], plaintext: String) -> Result<String> {
         let iv = &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-        let result = match AES::encrypt(key, iv, plaintext.as_bytes(), AESAlgorithms::AES128_CTR) {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        Some(hex::encode(result))
+        let result = AES::encrypt(key, iv, plaintext.as_bytes(), AESAlgorithms::AES128_CTR)?;
+        Ok(hex::encode(result))
     }
 
     pub fn decrypt(key: &[u8], description: &[u8]) -> Option<Message> {
@@ -49,12 +45,7 @@ impl Message {
         description: String,
         token: String,
     ) -> Result<Message> {
-        println!(
-            "{:?} {:?} {:?} {:?} {:?}",
-            key, conversation_id, user_id, description, token
-        );
-
-        let encrypted = Message::encrypt(&hex::decode(key).unwrap(), description.clone());
+        let encrypted = Message::encrypt(&hex::decode(key).unwrap(), description.clone())?;
 
         let payload = json!({
             "payload": {
@@ -64,12 +55,8 @@ impl Message {
             }
         });
 
-        println!("payload {:?}", payload);
-
         let api = GraphqlApi::new(constants::GATEWAY_URL.to_string(), token);
-        let res = api.create_message(payload).await?;
-
-        println!("message create response {:?}", res);
+        api.create_message(payload).await?;
 
         Ok(Message {
             plaintext: description,
@@ -78,7 +65,7 @@ impl Message {
 }
 
 impl Message {
-    pub fn encrypt_wasm(key: &[u8], plaintext: String) -> Option<String> {
+    pub fn encrypt_wasm(key: &[u8], plaintext: String) -> Result<String> {
         Message::encrypt(key, plaintext)
     }
 

@@ -1,4 +1,4 @@
-use crate::{constants, MetasyncApi, Networks, WhatsOnChainApi};
+use crate::{constants, MetasyncApi, Networks, UtxoDetectiveApi, WhatsOnChainApi};
 use anyhow::Result;
 use bsv::{P2PKHAddress, PublicKey, Script};
 use serde::{Deserialize, Serialize};
@@ -36,6 +36,25 @@ impl UTXO {
 
         let utxos = metasync
             .utxos(public_key, network)
+            .await?
+            .iter()
+            .map(|e| UTXO {
+                txid: e.txid.clone(),
+                vout: e.vout,
+                satoshis: e.satoshis.parse::<u64>().unwrap(),
+                path: e.path.parse::<i32>().unwrap(),
+                script: None,
+            })
+            .collect();
+
+        Ok(utxos)
+    }
+
+    pub async fn from_utxo_detective(public_key: &PublicKey, amount: u64) -> Result<Vec<UTXO>> {
+        let utxo_detective = UtxoDetectiveApi::new(constants::UTXO_DETECTIVE_URL.to_string());
+
+        let utxos = utxo_detective
+            .utxos(public_key, amount)
             .await?
             .iter()
             .map(|e| UTXO {

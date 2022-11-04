@@ -21,3 +21,6 @@ pub use auth::*;
 
 pub mod bitcoin_files;
 pub use bitcoin_files::*;
+
+pub mod utxo_detective;
+pub use utxo_detective::*;

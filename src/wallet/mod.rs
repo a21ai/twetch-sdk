@@ -123,22 +123,28 @@ impl Wallet {
         Ok(EphemeralCipher { cipher_text, hash })
     }
 
-    pub async fn balance(&self, network: &Networks) -> Result<u64> {
-        Ok(self.utxos(network).await?.iter().map(|e| e.satoshis).sum())
+    //pub async fn balance(&self, network: &Networks) -> Result<u64> {
+    //Ok(self.utxos(network).await?.iter().map(|e| e.satoshis).sum())
+    //}
+
+    pub async fn utxos(&self, network: &Networks, amount: u64) -> Result<Vec<UTXO>> {
+        match network {
+            Networks::BSV => {
+                Ok(UTXO::from_utxo_detective(&self.account_public_key()?, amount).await?)
+            }
+            _ => {
+                let wallet_utxos = self.wallet_utxos(network);
+                let account_utxos = self.account_utxos(network);
+
+                let mut wallet_utxos = wallet_utxos.await?;
+                let mut account_utxos = account_utxos.await?;
+
+                wallet_utxos.append(&mut account_utxos);
+
+                Ok(wallet_utxos)
+            }
+        }
     }
-
-    pub async fn utxos(&self, network: &Networks) -> Result<Vec<UTXO>> {
-        let wallet_utxos = self.wallet_utxos(network);
-        let account_utxos = self.account_utxos(network);
-
-        let mut wallet_utxos = wallet_utxos.await?;
-        let mut account_utxos = account_utxos.await?;
-
-        wallet_utxos.append(&mut account_utxos);
-
-        Ok(wallet_utxos)
-    }
-
     pub async fn resolve_change_address(&self) -> Result<Script> {
         if let Some(user_id) = &self.user_id {
             let metasync = MetasyncApi::new(constants::METASYNC_URL.to_string());

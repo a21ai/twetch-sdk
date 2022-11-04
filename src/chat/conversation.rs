@@ -2,16 +2,19 @@ use crate::{constants, GraphqlApi, Message, Wallet};
 use anyhow::Result;
 use base64;
 use bsv::{ECIESCiphertext, Hash, PrivateKey, PublicKey, ECIES};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Conversation {
-    id: String,
-    key: String,
+    pub id: String,
+    pub key: String,
 }
 
 impl Conversation {
     pub async fn create(token: String, user_ids: Vec<String>) -> Result<Conversation> {
         let api = GraphqlApi::new(constants::GATEWAY_URL.to_string(), token);
+
         let pubkeys = api
             .list_pubkeys(user_ids.clone())
             .await?
@@ -30,8 +33,11 @@ impl Conversation {
                 .as_str()
                 .unwrap()
                 .to_string();
+
+            let user_id = pubkeys[e].get("id").unwrap().as_str().unwrap().to_string();
+
             conversation_users.push(json!({
-                "userId": user_ids[e],
+                "userId": user_id,
                 "encryptedKey": Conversation::encrypt_key(key.clone(), pubkey).unwrap()
             }))
         }
@@ -48,6 +54,12 @@ impl Conversation {
         })
     }
 
+    pub async fn set_name(token: String, conversation: String, name: String) -> Result<()> {
+        let api = GraphqlApi::new(constants::GATEWAY_URL.to_string(), token);
+        api.update_conversation(conversation, name).await?;
+        Ok(())
+    }
+
     pub async fn create_message(&self, token: String, description: String) -> Result<Message> {
         Message::create(
             self.key.clone(),
@@ -58,9 +70,7 @@ impl Conversation {
         )
         .await
     }
-}
 
-impl Conversation {
     pub fn generate_key() -> String {
         Hash::sha_256(&PrivateKey::from_random().to_bytes())
             .to_hex()
@@ -70,48 +80,21 @@ impl Conversation {
             .collect()
     }
 
-    pub fn encrypt_key(key: String, pubkey: String) -> Option<String> {
-        let public_key = match PublicKey::from_hex(&pubkey) {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
+    pub fn encrypt_key(key: String, pubkey: String) -> Result<String> {
+        let public_key = PublicKey::from_hex(&pubkey)?;
+        let encrypted =
+            ECIES::encrypt_with_ephemeral_private_key(key.as_bytes(), &public_key)?.to_bytes();
 
-        let encrypted = match ECIES::encrypt_with_ephemeral_private_key(key.as_bytes(), &public_key)
-        {
-            Ok(v) => v.to_bytes(),
-            Err(_) => return None,
-        };
-
-        Some(base64::encode_config(encrypted, base64::STANDARD))
+        Ok(base64::encode_config(encrypted, base64::STANDARD))
     }
 
-    pub fn decrypt_key(encrypted_key: String, seed: String) -> Option<Vec<u8>> {
+    pub fn decrypt_key(encrypted_key: String, seed: String) -> Result<Vec<u8>> {
         let wallet = Wallet::new(seed);
-        let private_key = match wallet.account_private_key() {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        let encrypted_key_buf = match base64::decode_config(encrypted_key, base64::STANDARD) {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        let ciphertext = match ECIESCiphertext::from_bytes(&encrypted_key_buf, true) {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        let pubkey = match ciphertext.extract_public_key() {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        let decrypted = match ECIES::decrypt(&ciphertext, &private_key, &pubkey) {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        return Some(decrypted);
+        let private_key = wallet.account_private_key()?;
+        let encrypted_key_buf = base64::decode_config(encrypted_key, base64::STANDARD)?;
+        let ciphertext = ECIESCiphertext::from_bytes(&encrypted_key_buf, true)?;
+        let pubkey = ciphertext.extract_public_key()?;
+        let decrypted = ECIES::decrypt(&ciphertext, &private_key, &pubkey)?;
+        Ok(decrypted)
     }
 }
