@@ -7,7 +7,10 @@ pub struct ChatMessage(message::Message);
 #[wasm_bindgen]
 impl ChatMessage {
     pub fn encrypt(key: &[u8], plaintext: String) -> Option<String> {
-        message::Message::encrypt(key, plaintext)
+        match message::Message::encrypt(key, plaintext) {
+            Ok(v) => Some(v),
+            Err(_) => None,
+        }
     }
 
     pub fn decrypt(key: &[u8], description: &[u8]) -> Option<ChatMessage> {

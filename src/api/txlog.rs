@@ -15,6 +15,17 @@ impl TxlogApi {
         client.get(format!("{}{}", self.url, path))
     }
 
+    pub async fn rawtx(&self, txid: &String) -> Result<String> {
+        let res = self
+            .get(format!("/tx/{}/raw", txid))
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn script(&self, txid: &String, vout: u32) -> Result<Script> {
         let res = self
             .get(format!("/tx/{}/{}/script", txid, vout))

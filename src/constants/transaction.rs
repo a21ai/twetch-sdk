@@ -1,4 +1,5 @@
 pub const TX_FEE_RATE: f64 = 0.25;
+pub const MIN_TX_FEE_RATE: f64 = 0.1;
 // Either 106 or 107 bytes
 pub const P2PKH_UNLOCKING_SCRIPT_SIZE: usize = 107;
 pub const P2PKH_OUTPUT_SIZE: usize = 34;

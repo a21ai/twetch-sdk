@@ -1,6 +1,6 @@
 use crate::{
-    constants, ABIv1, Api, MetasyncApi, Networks, PayParams, PaymentDestination, PolynymApi,
-    PublishParams, TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
+    constants, ABIv1, Api, MetasyncApi, PayParams, PaymentDestination, PolynymApi, PublishParams,
+    TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
 };
 use anyhow::Result;
 use bsv::{P2PKHAddress, Transaction};
@@ -48,6 +48,7 @@ impl V1TwetchAction {
                     sats: 0,
                     address: None,
                     to: None,
+                    script: None,
                     args: Some(abi.args.clone()),
                     encrypt_args: call.encrypt_args,
                 });
@@ -57,6 +58,7 @@ impl V1TwetchAction {
                         outputs.push(TxBuilderOutput {
                             sats: sats,
                             address: Some(payee.to.clone()),
+                            script: None,
                             to: None,
                             args: None,
                             encrypt_args: None,

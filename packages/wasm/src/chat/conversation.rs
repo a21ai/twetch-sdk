@@ -13,11 +13,17 @@ impl Conversation {
 
     #[wasm_bindgen(js_name = encrypt)]
     pub fn encrypt_key(key: String, pubkey: String) -> Option<String> {
-        conversation::Conversation::encrypt_key(key, pubkey)
+        match conversation::Conversation::encrypt_key(key, pubkey) {
+            Ok(v) => Some(v),
+            Err(_) => None,
+        }
     }
 
     #[wasm_bindgen(js_name = decrypt)]
     pub fn decrypt_key(encrypted_key: String, seed: String) -> Option<Vec<u8>> {
-        conversation::Conversation::decrypt_key(encrypted_key, seed)
+        match conversation::Conversation::decrypt_key(encrypted_key, seed) {
+            Ok(v) => Some(v),
+            Err(_) => None,
+        }
     }
 }

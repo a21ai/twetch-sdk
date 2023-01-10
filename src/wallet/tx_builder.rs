@@ -15,6 +15,7 @@ pub struct TxBuilderOutput {
     pub sats: u64,
     pub address: Option<String>,
     pub to: Option<String>,
+    pub script: Option<String>,
     pub args: Option<Vec<String>>,
     pub encrypt_args: Option<bool>,
 }
@@ -61,6 +62,7 @@ impl TxBuilder {
 
         for i in 0..tx.get_noutputs() {
             let tx_out = tx.get_output(i).unwrap();
+
             if !tx_out
                 .get_script_pub_key_hex()
                 .contains(&wallet.account_address()?.get_locking_script()?.to_hex())
@@ -121,9 +123,7 @@ impl TxBuilder {
                 output.sats,
                 &P2PKHAddress::from_string(address)?.get_locking_script()?,
             ));
-        }
-
-        if let Some(to) = &output.to {
+        } else if let Some(to) = &output.to {
             let polynym = PolynymApi::new(constants::POLYNYM_URL.to_string());
 
             // Addresses
@@ -158,9 +158,13 @@ impl TxBuilder {
                     tx_outs.push(TxOut::new(output.sats, &address.get_locking_script()?));
                 }
             }
-        }
-
-        if let Some(args) = &output.args {
+        } else if let Some(script_string) = &output.script {
+            let script = match Script::from_asm_string(&script_string) {
+                Ok(v) => v,
+                Err(_) => anyhow::bail!("failed to resolve 'script'"),
+            };
+            tx_outs.push(TxOut::new(output.sats, &script));
+        } else if let Some(args) = &output.args {
             let asm = args
                 .iter()
                 .map(|a| hex::encode(a.as_bytes()))
@@ -258,11 +262,21 @@ impl TxBuilder {
         // Add existing satoshis to transaction
         for i in 0..tx.get_noutputs() {
             let tx_out = tx.get_output(i).unwrap();
-            output_sats += tx_out.get_satoshis();
 
-            match TxBuilder::find_nft(tx_out) {
-                Some(v) => nfts.push(v.title),
-                None => {}
+            match TxBuilder::find_nft(tx_out.clone()) {
+                Some(v) => {
+                    let new_txout = TxOut::new(
+                        std::cmp::max(2180, tx_out.get_satoshis()),
+                        &tx_out.get_script_pub_key(),
+                    );
+
+                    output_sats += new_txout.get_satoshis();
+                    tx.set_output(i, &new_txout);
+                    nfts.push(v.title)
+                }
+                None => {
+                    output_sats += tx_out.get_satoshis();
+                }
             };
         }
 
@@ -312,8 +326,12 @@ impl TxBuilder {
 
             let balance: u64 = wallet_utxos.iter().map(|e| e.satoshis).sum();
             anyhow::ensure!(
-                balance > output_sats,
-                format!("Insufficient wallet balance",)
+                balance >= output_sats,
+                format!(
+                    "Insufficient wallet balance : {:.8} BSV - {:.8} BSV",
+                    balance as f64 / 1e8,
+                    output_sats as f64 / 1e8
+                )
             );
 
             for utxo in &wallet_utxos {
@@ -342,22 +360,7 @@ impl TxBuilder {
             if change_sats > 0 {
                 tx.add_output(&TxOut::new(change_sats as u64, &change_script));
             } else {
-                anyhow::ensure!(None == builder.contract, "1: Insufficient wallet balance");
-                anyhow::ensure!(
-                    tx.get_noutputs() == 1,
-                    "2: Insufficient wallet balance here"
-                );
-
-                // Sweep if only 1 p2pkh
-                let index = tx.get_noutputs() - 1;
-                let tx_out = tx.get_output(index).unwrap();
-                tx.set_output(
-                    index,
-                    &TxOut::new(
-                        tx_out.get_satoshis() - fee_sats + 15,
-                        &tx_out.get_script_pub_key(),
-                    ),
-                )
+                anyhow::bail!("Insufficient transaction fees");
             }
         }
 
@@ -386,6 +389,11 @@ impl TxBuilder {
                 data: tx.to_compact_bytes()?,
                 signatures: ts.signatures.clone(),
             });
+        }
+
+        let fee_rate = fee_sats as f64 / tx.get_size().unwrap() as f64;
+        if fee_rate < constants::MIN_TX_FEE_RATE {
+            anyhow::bail!("Fee rate too low ({:.3} sats/byte)", fee_rate);
         }
 
         Ok(BuiltTx {

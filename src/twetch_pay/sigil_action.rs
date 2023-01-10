@@ -1,12 +1,12 @@
 use crate::{
-    constants, get_uto, BitcoinFilesApi, Networks, SigilABI, SigilABIMethods, TwetchPayAction,
-    TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
+    constants, get_mint_utos, get_uto, BitcoinFilesApi, Networks, SigilABI, SigilABIMethods,
+    TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
 };
 use anyhow::Result;
 
 use async_trait::async_trait;
 use sigil_sdk::contracts::{brc721, lizervaxx, slurp_juice};
-use sigil_types::{Outpoint, SigilError, TokenStore, UTO};
+use sigil_types::{Outpoint, SigilError, TokenStore, UTO, UTXO};
 
 pub struct SigilAction {}
 
@@ -17,6 +17,12 @@ impl TokenStore for TestStore {
     async fn get_uto(&self, _outpoint: &Outpoint) -> Result<UTO, SigilError> {
         Err(SigilError::UTONotFound(
             "get_uto not implemented".to_string(),
+        ))
+    }
+
+    async fn get_utxo(&self, _outpoint: &Outpoint) -> Result<UTXO, SigilError> {
+        Err(SigilError::UTONotFound(
+            "get_utxo not implemented".to_string(),
         ))
     }
 }
@@ -39,18 +45,22 @@ impl SigilAction {
                         store: Box::new(store),
                     };
                     let uto = get_uto(params[0].clone().into()).await?;
-                    contract.abi(brc721::ABI::Transfer(uto, params[1].clone().into()))?
+                    contract.abi(brc721::basic::ABI::Transfer(uto, params[1].clone().into()))?
                 }
                 SigilABIMethods::Mint => {
                     let contract = brc721::BRC721Basic {
                         store: Box::new(store),
                     };
-                    let uto = get_uto(params[0].clone().into()).await?;
-                    contract.abi(brc721::ABI::Mint(
-                        uto,
-                        params[1].clone().into(),
-                        params[2].clone().into(),
-                    ))?
+
+                    let utos = get_mint_utos(params[0].clone(), abi.contract.clone());
+
+                    let utxo = UTXO {
+                        outpoint: params[1].clone().into(),
+                        satoshis: params[2].clone().into(),
+                        script: params[3].clone().into(),
+                    };
+
+                    contract.abi(brc721::basic::ABI::Mint(utxo, utos))?
                 }
                 SigilABIMethods::Purchase => {
                     let contract = brc721::BRC721Basic {
@@ -73,13 +83,14 @@ impl SigilAction {
                                 sats: royalty,
                                 address: Some(contract_init.creator_address),
                                 to: None,
+                                script: None,
                                 args: None,
                                 encrypt_args: None,
                             });
                         }
                     }
 
-                    contract.abi(brc721::ABI::Purchase(
+                    contract.abi(brc721::basic::ABI::Purchase(
                         uto,
                         wallet.account_address()?.get_locking_script()?,
                         params[1].clone().into(),
@@ -92,7 +103,7 @@ impl SigilAction {
                         store: Box::new(store),
                     };
                     let uto = get_uto(params[0].clone().into()).await?;
-                    contract.abi(brc721::ABI::Escrow(
+                    contract.abi(brc721::basic::ABI::Escrow(
                         uto,
                         params[1].clone().into(),
                         params[2].clone().into(),

@@ -28,6 +28,12 @@ pub enum SigilABIMethods {
     Slurp,
 }
 
+impl From<SigilABIParam> for TXID {
+    fn from(v: SigilABIParam) -> TXID {
+        TXID::from_hex(v.value.as_str().unwrap().to_string()).unwrap()
+    }
+}
+
 impl From<SigilABIParam> for String {
     fn from(v: SigilABIParam) -> String {
         v.value.as_str().unwrap().to_string()
@@ -48,6 +54,51 @@ impl From<SigilABIParam> for u64 {
     fn from(v: SigilABIParam) -> u64 {
         v.value.as_u64().unwrap()
     }
+}
+
+impl From<SigilABIParam> for Outpoint {
+    fn from(v: SigilABIParam) -> Outpoint {
+        let outpoint: String = v.into();
+        Outpoint::from_hex(outpoint).unwrap()
+    }
+}
+
+impl From<SigilABIParam> for Vec<UTO> {
+    fn from(v: SigilABIParam) -> Vec<UTO> {
+        let values: Vec<Value> = serde_json::from_value(v.value.clone()).unwrap();
+
+        let utos: Vec<UTO> = values
+            .iter()
+            .map(|e| UTO {
+                outpoint: Outpoint([0u8; 36]),
+                satoshis: 2180,
+                contract: TXID::from_hex(e.get("contract").unwrap().as_str().unwrap()).unwrap(),
+                token: hex::decode(e.get("token").unwrap().as_str().unwrap()).unwrap(),
+                script: Script::from_hex(e.get("script").unwrap().as_str().unwrap()).unwrap(),
+                value: None,
+            })
+            .collect();
+
+        utos
+    }
+}
+
+pub fn get_mint_utos(v: SigilABIParam, contract: String) -> Vec<UTO> {
+    let values: Vec<Value> = serde_json::from_str(v.value.as_str().unwrap()).unwrap();
+
+    let utos: Vec<UTO> = values
+        .iter()
+        .map(|e| UTO {
+            outpoint: Outpoint([0u8; 36]),
+            satoshis: 2180,
+            contract: TXID::from_hex(contract.clone()).unwrap(),
+            token: hex::decode(e.get("token").unwrap().as_str().unwrap()).unwrap(),
+            script: Script::from_hex(e.get("script").unwrap().as_str().unwrap()).unwrap(),
+            value: None,
+        })
+        .collect();
+
+    utos
 }
 
 pub async fn get_uto(outpoint: String) -> Result<UTO> {
