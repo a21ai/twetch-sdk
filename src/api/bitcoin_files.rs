@@ -5,7 +5,7 @@ pub struct BitcoinFilesApi {
     url: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ContractInit {
     pub version: String,
     pub name: Option<String>,
