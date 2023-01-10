@@ -153,6 +153,7 @@ impl SigilAction {
             return Ok(TwetchPayAction {
                 built_tx,
                 call: call.clone(),
+                payees: Vec::new(),
                 is_troll_toll: None,
             });
         }

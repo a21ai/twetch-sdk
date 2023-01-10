@@ -9,7 +9,7 @@ pub struct Api {
     pub token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Payee {
     pub amount: Value,
     pub sats: Option<u64>,

@@ -1,5 +1,5 @@
 use crate::{
-    BuiltTx, Networks, PublishParams, SigilAction, TxBuilderOutput, V1TwetchAction, Wallet,
+    BuiltTx, Networks, Payee, PublishParams, SigilAction, TxBuilderOutput, V1TwetchAction, Wallet,
 };
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,7 @@ pub struct TwetchPayAction {
     pub built_tx: BuiltTx,
     pub call: TwetchPayCall,
     pub is_troll_toll: Option<bool>,
+    pub payees: Vec<Payee>,
 }
 
 impl TwetchPayAction {}

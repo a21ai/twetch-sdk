@@ -1,6 +1,6 @@
 use crate::{
-    constants, ABIv1, Api, MetasyncApi, PayParams, PaymentDestination, PolynymApi, PublishParams,
-    TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
+    constants, ABIv1, Api, MetasyncApi, PayParams, Payee, PaymentDestination, PolynymApi,
+    PublishParams, TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
 };
 use anyhow::Result;
 use bsv::{P2PKHAddress, Transaction};
@@ -11,6 +11,7 @@ impl V1TwetchAction {
         let mut outputs: Vec<TxBuilderOutput> = Vec::new();
         let mut change_address: Option<P2PKHAddress> = None;
         let mut is_troll_toll: bool = false;
+        let mut payees: Vec<Payee> = Vec::new();
 
         if let Some(action) = &call.action {
             if let Some(args) = &call.args {
@@ -21,6 +22,8 @@ impl V1TwetchAction {
                 );
 
                 let response = api.payees(action, &abi.args).await?;
+
+                payees.append(&mut response.payees.clone());
 
                 response.payees.iter().for_each(|e| {
                     if let Some(types) = &e.types {
@@ -92,6 +95,7 @@ impl V1TwetchAction {
             built_tx,
             call: call.clone(),
             is_troll_toll: Some(is_troll_toll),
+            payees,
         })
     }
 
