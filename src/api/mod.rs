@@ -24,3 +24,9 @@ pub use bitcoin_files::*;
 
 pub mod utxo_detective;
 pub use utxo_detective::*;
+
+pub mod rpc;
+pub use rpc::*;
+
+pub mod mapi;
+pub use mapi::*;
