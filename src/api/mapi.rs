@@ -45,10 +45,10 @@ impl MapiApi {
             .header("Authorization", format!("Bearer {}", self.token))
     }
 
-    pub async fn broadcast_rawtx(&self, rawtx: Vec<u8>) -> Result<bool> {
+    pub async fn broadcast_rawtx(&self, rawtx: &Vec<u8>) -> Result<bool> {
         let res = self
             .post("/tx".to_string())
-            .body(rawtx)
+            .body(rawtx.clone())
             .send()
             .await?
             .json::<BroadcastMapiResponse>()

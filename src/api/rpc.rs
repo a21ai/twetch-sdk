@@ -75,10 +75,10 @@ impl RPCClient {
             .basic_auth(&self.user, Some(&self.password))
     }
 
-    pub async fn broadcast_rawtx(&self, rawtx: String) -> Result<bool> {
+    pub async fn broadcast_rawtx(&self, rawtx: &Vec<u8>) -> Result<bool> {
         let body = json!({
             "method": "sendrawtransaction".to_string(),
-            "params": [rawtx],
+            "params": [hex::encode(rawtx)],
             "id": "420".to_string(),
         });
 
