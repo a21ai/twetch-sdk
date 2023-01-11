@@ -37,6 +37,21 @@ impl From<TwetchPayCall> for twetch_pay::TwetchPayCall {
 }
 
 #[wasm_bindgen]
+pub struct Payee(twetch_sdk::Payee);
+
+impl From<twetch_sdk::Payee> for Payee {
+    fn from(v: twetch_sdk::Payee) -> Payee {
+        Payee(v)
+    }
+}
+
+impl From<Payee> for twetch_sdk::Payee {
+    fn from(v: Payee) -> twetch_sdk::Payee {
+        v.0
+    }
+}
+
+#[wasm_bindgen]
 pub struct TwetchPayAction(twetch_pay::TwetchPayAction);
 
 impl From<twetch_pay::TwetchPayAction> for TwetchPayAction {
@@ -76,6 +91,26 @@ impl From<RTwetchPayActionType> for TwetchPayActionType {
 }
 
 #[wasm_bindgen]
+impl Payee {
+    pub fn get_type(&self, index: usize) -> String {
+        self.0.types.clone().unwrap()[index].clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn num_types(&self) -> usize {
+        match self.0.types.clone() {
+            Some(v) => v.len(),
+            None => 0,
+        }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn user_id(&self) -> String {
+        self.0.user_id.clone().unwrap()
+    }
+}
+
+#[wasm_bindgen]
 impl TwetchPayAction {
     #[wasm_bindgen(getter)]
     pub fn built_tx(&self) -> BuiltTx {
@@ -90,6 +125,15 @@ impl TwetchPayAction {
     #[wasm_bindgen(getter)]
     pub fn call(&self) -> TwetchPayCall {
         self.0.call.clone().into()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn num_payees(&self) -> usize {
+        self.0.payees.len()
+    }
+
+    pub fn get_payee(&self, index: usize) -> Payee {
+        self.0.payees[index].clone().into()
     }
 }
 

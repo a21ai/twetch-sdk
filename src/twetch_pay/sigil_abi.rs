@@ -63,26 +63,6 @@ impl From<SigilABIParam> for Outpoint {
     }
 }
 
-impl From<SigilABIParam> for Vec<UTO> {
-    fn from(v: SigilABIParam) -> Vec<UTO> {
-        let values: Vec<Value> = serde_json::from_value(v.value.clone()).unwrap();
-
-        let utos: Vec<UTO> = values
-            .iter()
-            .map(|e| UTO {
-                outpoint: Outpoint([0u8; 36]),
-                satoshis: 2180,
-                contract: TXID::from_hex(e.get("contract").unwrap().as_str().unwrap()).unwrap(),
-                token: hex::decode(e.get("token").unwrap().as_str().unwrap()).unwrap(),
-                script: Script::from_hex(e.get("script").unwrap().as_str().unwrap()).unwrap(),
-                value: None,
-            })
-            .collect();
-
-        utos
-    }
-}
-
 pub fn get_mint_utos(v: SigilABIParam, contract: String) -> Vec<UTO> {
     let values: Vec<Value> = serde_json::from_str(v.value.as_str().unwrap()).unwrap();
 

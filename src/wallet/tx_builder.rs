@@ -265,13 +265,7 @@ impl TxBuilder {
 
             match TxBuilder::find_nft(tx_out.clone()) {
                 Some(v) => {
-                    let new_txout = TxOut::new(
-                        std::cmp::max(2180, tx_out.get_satoshis()),
-                        &tx_out.get_script_pub_key(),
-                    );
-
-                    output_sats += new_txout.get_satoshis();
-                    tx.set_output(i, &new_txout);
+                    output_sats += tx_out.get_satoshis();
                     nfts.push(v.title)
                 }
                 None => {
