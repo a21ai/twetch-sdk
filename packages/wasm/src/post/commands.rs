@@ -1,5 +1,5 @@
 use twetch_sdk::post::commands;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, JsValue};
 
 #[wasm_bindgen]
 pub struct PayCommand(commands::PayCommand);
@@ -19,5 +19,10 @@ impl PayCommand {
 
     pub fn get_amount_bsv(&self, exchange_rate: f64) -> f64 {
         commands::PayCommand::get_amount_bsv(&self.0, &exchange_rate)
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn users(&self) -> JsValue {
+        JsValue::from_serde(&self.0.users).unwrap()
     }
 }
