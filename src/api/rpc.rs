@@ -1,6 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Deserialize, Default, Debug, Clone)]
 pub struct RPCClient {
@@ -57,6 +57,12 @@ pub struct RPCRawBlockResponse {
 }
 
 #[derive(Deserialize, Default, Debug)]
+pub struct BroadcastResponse {
+    pub success: bool,
+    pub response: Value,
+}
+
+#[derive(Deserialize, Default, Debug)]
 pub struct RPCBlock {
     pub tx: Vec<String>,
 }
@@ -75,16 +81,21 @@ impl RPCClient {
             .basic_auth(&self.user, Some(&self.password))
     }
 
-    pub async fn broadcast_rawtx(&self, rawtx: &Vec<u8>) -> Result<bool> {
+    pub async fn broadcast_rawtx(&self, rawtx: &Vec<u8>) -> Result<BroadcastResponse> {
         let body = json!({
             "method": "sendrawtransaction".to_string(),
             "params": [hex::encode(rawtx)],
             "id": "420".to_string(),
         });
 
-        let status = self.client().json(&body).send().await?.status();
+        let res = self.client().json(&body).send().await?;
+        let status = (&res).status().clone();
+        let body = res.json::<Value>().await?;
 
-        return Ok(status == reqwest::StatusCode::OK);
+        return Ok(BroadcastResponse {
+            success: status == reqwest::StatusCode::OK,
+            response: body,
+        });
     }
 
     pub async fn get_blockchain_info(&self) -> Result<RPCBlockchainInfoResponse> {

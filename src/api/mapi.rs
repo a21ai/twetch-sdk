@@ -1,5 +1,6 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 pub struct MapiApi {
     pub url: String,
@@ -8,14 +9,15 @@ pub struct MapiApi {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BroadcastMapiResponse {
-    payload: Option<String>,
+    pub payload: Option<String>,
+    pub message: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BroadcastMapiResponsePayload {
-    txid: String,
-    returnResult: String,
-    resultDescription: String,
+    pub txid: String,
+    pub returnResult: String,
+    pub resultDescription: String,
 }
 
 const VALID_ERRORS: [&str; 5] = [
@@ -48,13 +50,12 @@ impl MapiApi {
     pub async fn broadcast_rawtx(&self, rawtx: &Vec<u8>) -> Result<bool> {
         let res = self
             .post("/tx".to_string())
+            .header("Content-Type", "application/octet-stream")
             .body(rawtx.clone())
             .send()
             .await?
             .json::<BroadcastMapiResponse>()
             .await?;
-
-        println!("{:#?}", res);
 
         let response_payload = match &res.payload {
             Some(v) => v,
