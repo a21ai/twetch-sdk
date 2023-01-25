@@ -36,6 +36,19 @@ impl UtxoDetectiveApi {
         client.get(format!("{}{}", self.url, path))
     }
 
+    pub async fn sync_tx(&self, txid: String) -> Result<()> {
+        let payload = json!({
+            "hex": txid,
+        });
+
+        self.post("/sync/tx".to_string())
+            .json(&payload)
+            .send()
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn utxos(
         &self,
         public_key: &PublicKey,
