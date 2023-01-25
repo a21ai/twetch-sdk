@@ -1,7 +1,7 @@
 use anyhow::Result;
 use bsv::PublicKey;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct UtxoDetectiveUTXO {
@@ -36,17 +36,20 @@ impl UtxoDetectiveApi {
         client.get(format!("{}{}", self.url, path))
     }
 
-    pub async fn sync_tx(&self, txid: String) -> Result<()> {
+    pub async fn sync_tx(&self, txid: String) -> Result<Value> {
         let payload = json!({
             "hex": txid,
         });
 
-        self.post("/sync/tx".to_string())
+        let res = self
+            .post("/sync/tx".to_string())
             .json(&payload)
             .send()
+            .await?
+            .json::<Value>()
             .await?;
 
-        Ok(())
+        Ok(res)
     }
 
     pub async fn utxos(
