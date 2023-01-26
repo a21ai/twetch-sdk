@@ -31,7 +31,7 @@ pub struct MetasyncApi {
     url: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PaymentDestinationOutput {
     pub satoshis: u64,
     pub script: String,
