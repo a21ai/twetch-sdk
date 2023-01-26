@@ -1,5 +1,5 @@
 use crate::{
-    constants, ABIv1, Api, MetasyncApi, PayParams, Payee, PaymentDestination, PolynymApi,
+    constants, ABIv1, Api, MetasyncApi, Networks, PayParams, Payee, PaymentDestination, PolynymApi,
     PublishParams, TwetchPayAction, TwetchPayCall, TxBuilder, TxBuilderOutput, Wallet,
 };
 use anyhow::Result;
@@ -113,12 +113,19 @@ impl V1TwetchAction {
     pub async fn submit(wallet: &Wallet, action: &TwetchPayAction) -> Result<PublishParams> {
         let mut publish_params = PublishParams { token: None };
 
-        for e in &action.built_tx.payment_destinations {
-            match V1TwetchAction::submit_payment_destination(&action.built_tx.tx, e, wallet).await {
-                Ok(_) => {}
-                Err(_) => {}
-            };
-        }
+        match action.call.network {
+            Networks::BSV => {
+                for e in &action.built_tx.payment_destinations {
+                    match V1TwetchAction::submit_payment_destination(&action.built_tx.tx, e, wallet)
+                        .await
+                    {
+                        Ok(_) => {}
+                        Err(_) => {}
+                    };
+                }
+            }
+            _ => {}
+        };
 
         if let Some(action_name) = &action.call.action {
             let api = Api::new(

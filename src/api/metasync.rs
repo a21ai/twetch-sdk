@@ -106,9 +106,14 @@ impl MetasyncApi {
     pub async fn payment_destination(
         &self,
         paymail: &String,
+        satoshis: Option<i64>,
     ) -> Result<MetasyncPaymentDestination> {
+        let sats = match satoshis {
+            Some(v) => v,
+            None => 0,
+        };
         let payload = json!({
-            "satoshis": 0,
+            "satoshis": sats,
         });
         let res = self
             .post(format!("/paymail/p2p-payment-destination/{}", paymail))

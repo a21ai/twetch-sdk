@@ -149,7 +149,7 @@ impl Wallet {
         if let Some(user_id) = &self.user_id {
             let metasync = MetasyncApi::new(constants::METASYNC_URL.to_string());
             let payment_destination = metasync
-                .payment_destination(&format!("{}@twetch.me", user_id))
+                .payment_destination(&format!("{}@twetch.me", user_id), None)
                 .await?;
             return Ok(Script::from_hex(&payment_destination.outputs[0].script)?);
         }
