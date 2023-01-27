@@ -70,6 +70,25 @@ impl MetasyncApi {
         client.get(format!("{}{}", self.url, path))
     }
 
+    pub async fn submit_sigil_v3(
+        &self,
+        tx: &Transaction,
+        collection_id: &String,
+        method: &String,
+    ) -> Result<Broadcast> {
+        let payload = json!({ "hex": tx.to_compact_hex().unwrap(), "contracts": [collection_id], "methods": [method] });
+
+        let res = self
+            .post(format!("/sigil-v3"))
+            .json(&payload)
+            .send()
+            .await?
+            .json::<Broadcast>()
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn uto(&self, outpoint: &String) -> Result<MetasyncUTO> {
         let res = self
             .get(format!("/uto/{}", outpoint))
