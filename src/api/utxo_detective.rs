@@ -17,6 +17,18 @@ pub struct UtxoDetectiveUTXOResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct UtxoDetectiveDecodeTxResponse {
+    pub outputs: Vec<UtxoDetectiveDecodeTxOutput>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UtxoDetectiveDecodeTxOutput {
+    pub alias: Option<String>,
+    pub satoshis: u64,
+    pub scripthash: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UtxoDetectiveApi {
     url: String,
 }
@@ -36,9 +48,25 @@ impl UtxoDetectiveApi {
         client.get(format!("{}{}", self.url, path))
     }
 
-    pub async fn sync_tx(&self, txid: String) -> Result<Value> {
+    pub async fn decode_tx(&self, rawtx: String) -> Result<UtxoDetectiveDecodeTxResponse> {
         let payload = json!({
-            "hex": txid,
+            "hex": rawtx,
+        });
+
+        let res = self
+            .post("/sync/decode-tx".to_string())
+            .json(&payload)
+            .send()
+            .await?
+            .json::<UtxoDetectiveDecodeTxResponse>()
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn sync_tx(&self, rawtx: String) -> Result<Value> {
+        let payload = json!({
+            "hex": rawtx,
         });
 
         let res = self
