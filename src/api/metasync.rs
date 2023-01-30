@@ -44,8 +44,8 @@ pub struct MetasyncPaymentDestination {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Broadcast {
-    txid: Option<String>,
-    error: Option<String>,
+    pub txid: Option<String>,
+    pub error: Option<String>,
 }
 
 impl MetasyncApi {
