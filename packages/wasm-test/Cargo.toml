@@ -1,0 +1,37 @@
+[package]
+name = "twetch-sdk-wasm"
+version = "0.0.1"
+authors = ["utxo detective"]
+edition = "2021"
+categories = ['no-std']
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+bdk = { version = "0.26.0" }
+
+#[dependencies.web-sys]
+#version = "0.3.4"
+#features = [
+  #'Headers',
+  #'Request',
+  #'RequestInit',
+  #'RequestMode',
+  #'Response',
+  #'Window',
+#]
+
+#[patch.crates-io]
+#wasm-bindgen = { git = "https://github.com/bsvwasm/wasm-bindgen", branch = "universal-ui64-patch" }
+
+#[build]
+#rustflags = ["-C", "target-feature=+simd128"]
+
+#[profile.release]
+#opt-level = 3
+#lto = true
+
+#[package.metadata.wasm-pack.profile.release]
+#wasm-opt = false

@@ -1,5 +1,5 @@
 use crate::{EphemeralCipher, TypedSigning};
-use bsv_wasm::{ExtendedPublicKey, P2PKHAddress, PublicKey, Transaction};
+use bsv_wasm::{ExtendedPrivateKey, ExtendedPublicKey, P2PKHAddress, PublicKey, Transaction};
 use twetch_sdk::{wallet, UTXO};
 use wasm_bindgen::{prelude::*, JsValue};
 
@@ -53,8 +53,29 @@ impl Wallet {
         }
     }
 
+    pub fn wallet_xpriv(&self) -> Option<ExtendedPrivateKey> {
+        match wallet::Wallet::wallet_xpriv(&self.0) {
+            Ok(v) => Some(v.into()),
+            Err(_) => None,
+        }
+    }
+
     pub fn wallet_xpub(&self) -> Option<ExtendedPublicKey> {
         match wallet::Wallet::wallet_xpub(&self.0) {
+            Ok(v) => Some(v.into()),
+            Err(_) => None,
+        }
+    }
+
+    pub fn taproot_xpriv(&self) -> Option<ExtendedPrivateKey> {
+        match wallet::Wallet::taproot_xpriv(&self.0) {
+            Ok(v) => Some(v.into()),
+            Err(_) => None,
+        }
+    }
+
+    pub fn taproot_xpub(&self) -> Option<ExtendedPublicKey> {
+        match wallet::Wallet::taproot_xpub(&self.0) {
             Ok(v) => Some(v.into()),
             Err(_) => None,
         }
@@ -66,6 +87,13 @@ impl Wallet {
             Err(_) => None,
         }
     }
+
+    //pub fn display_address_segwit(&self) -> Option<String> {
+    //match wallet::Wallet::display_address_segwit(&self.0) {
+    //Ok(v) => Some(v.into()),
+    //Err(_) => None,
+    //}
+    //}
 
     pub fn ephemeral_encrypt(&self, plain_text: Vec<u8>) -> Option<EphemeralCipher> {
         match wallet::Wallet::ephemeral_encrypt(&self.0, plain_text) {

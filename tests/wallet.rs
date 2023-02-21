@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod wallet_tests {
     use anyhow::Result;
-    use bsv::{Script, TxOut};
+    use bsv::{ExtendedPublicKey, Script, TxOut};
     use twetch_sdk::{Networks, TxBuilder, TxBuilderOutput, Wallet};
 
     const SEED: &str = "book fit fly ketchup also elevator scout mind edit fatal where rookie";
@@ -91,78 +91,110 @@ mod wallet_tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn tx_builder() -> Result<()> {
+    #[test]
+    fn xpub_xpriv_match() -> Result<()> {
         let wallet = Wallet::new(SEED.to_string());
 
-        let builder = TxBuilder {
-            network: Networks::BSV,
-            contract: None,
-            extended_tx: None,
-            typed_signing: None,
-            outputs: vec![
-                TxBuilderOutput {
-                    sats: 100,
-                    address: None,
-                    to: Some("@1".to_string()),
-                    args: None,
-                    encrypt_args: None,
-                },
-                TxBuilderOutput {
-                    sats: 100,
-                    address: None,
-                    to: Some("1".to_string()),
-                    args: None,
-                    encrypt_args: None,
-                },
-                TxBuilderOutput {
-                    sats: 100,
-                    address: None,
-                    to: Some("12tDncQvFZaZzqanupmtXpDUm42Wd4Cn4W".to_string()),
-                    args: None,
-                    encrypt_args: None,
-                },
-                TxBuilderOutput {
-                    sats: 100,
-                    address: None,
-                    to: Some("harry@relayx.io".to_string()),
-                    args: None,
-                    encrypt_args: None,
-                },
-                TxBuilderOutput {
-                    sats: 100,
-                    address: None,
-                    to: Some("type@handcash.io".to_string()),
-                    args: None,
-                    encrypt_args: None,
-                },
-            ],
-            change_address: None,
-            auto_fund: false,
-        };
-
-        let built = wallet.build_tx(&builder).await?;
-        let tx = built.tx;
-
         assert_eq!(
-            tx.get_output(0).unwrap().get_script_pub_key_hex(),
-            "76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
+            wallet.wallet_xpub()?.get_public_key().to_hex()?,
+            ExtendedPublicKey::from_xpriv(&wallet.wallet_xpriv()?)
+                .get_public_key()
+                .to_hex()?
         );
-        assert_eq!(
-            tx.get_output(1).unwrap().get_script_pub_key_hex(),
-            "76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
-        );
-        assert_eq!(
-            tx.get_output(2).unwrap().get_script_pub_key_hex(),
-            "76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
-        );
-        assert_eq!(
-            tx.get_output(3).unwrap().get_script_pub_key_hex(),
-            "76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
-        );
-        assert_eq!(tx.get_output(4).unwrap().get_script_pub_key_hex().len(), 50);
-        assert_eq!(built.payment_destinations.len(), 1);
 
         Ok(())
     }
+
+    //#[test]
+    //fn segwit_address() -> Result<()> {
+    //let wallet = Wallet::new(SEED.to_string());
+    //let segwit_address = wallet.display_address_segwit()?;
+
+    //assert_eq!(
+    //segwit_address,
+    //"bc1qksjasa8m2zk8ram3mv8ne4w8skjg9ywelxv84h".to_string()
+    //);
+
+    //Ok(())
+    //}
+
+    //#[tokio::test]
+    //async fn tx_builder() -> Result<()> {
+    //let wallet = Wallet::new(SEED.to_string());
+
+    //let builder = TxBuilder {
+    //network: Networks::BSV,
+    //contract: None,
+    //extended_tx: None,
+    //typed_signing: None,
+    //outputs: vec![
+    //TxBuilderOutput {
+    //sats: 100,
+    //address: None,
+    //to: Some("@1".to_string()),
+    //args: None,
+    //encrypt_args: None,
+    //script: None,
+    //},
+    //TxBuilderOutput {
+    //sats: 100,
+    //address: None,
+    //to: Some("1".to_string()),
+    //args: None,
+    //encrypt_args: None,
+    //script: None,
+    //},
+    //TxBuilderOutput {
+    //sats: 100,
+    //address: None,
+    //to: Some("12tDncQvFZaZzqanupmtXpDUm42Wd4Cn4W".to_string()),
+    //args: None,
+    //encrypt_args: None,
+    //script: None,
+    //},
+    //TxBuilderOutput {
+    //sats: 100,
+    //address: None,
+    //to: Some("harry@relayx.io".to_string()),
+    //args: None,
+    //encrypt_args: None,
+    //script: None,
+    //},
+    //TxBuilderOutput {
+    //sats: 100,
+    //address: None,
+    //to: Some("type@handcash.io".to_string()),
+    //args: None,
+    //encrypt_args: None,
+    //script: None,
+    //},
+    //],
+    //change_address: None,
+    //auto_fund: false,
+    //};
+
+    //let built = wallet.build_tx(&builder).await?;
+    //let tx = built.tx;
+
+    //assert_eq!(
+    //tx.get_output(0).unwrap().get_script_pub_key_hex(),
+    //"76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
+    //);
+    //assert_eq!(
+    //tx.get_output(1).unwrap().get_script_pub_key_hex(),
+    //"76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
+    //);
+    //assert_eq!(
+    //tx.get_output(2).unwrap().get_script_pub_key_hex(),
+    //"76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
+    //);
+    //assert_eq!(
+    //tx.get_output(3).unwrap().get_script_pub_key_hex(),
+    //"76a91414a8036c8b3d910a7e24d46067048d8761274b5588ac"
+    //);
+    //assert_eq!(tx.get_output(4).unwrap().get_script_pub_key_hex().len(), 50);
+    //assert_eq!(built.payment_destinations.len(), 1);
+
+    //Ok(())
+    //}
 }

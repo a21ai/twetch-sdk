@@ -1,5 +1,5 @@
 use crate::{BuiltTx, Wallet};
-use serde_json::{json, Value};
+use serde_json::json;
 use twetch_sdk::{
     twetch_pay, PublishParams as RPublishParams, TwetchPayActionType as RTwetchPayActionType,
 };

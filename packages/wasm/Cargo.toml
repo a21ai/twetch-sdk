@@ -27,6 +27,7 @@ twetch-sdk = { path =  "../../" }
 wasm-bindgen = { version = "0.2.81", features = ["serde-serialize"]  }
 wasm-bindgen-futures = "0.4.31"
 hex = "0.4.3"
+getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.20"

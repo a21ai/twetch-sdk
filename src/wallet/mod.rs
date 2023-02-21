@@ -8,6 +8,10 @@ pub use utxo::*;
 
 use crate::{constants, AuthToken, MetasyncApi};
 use anyhow::Result;
+//use bitcoin::{
+//network::constants::Network as BTCNetwork,
+//util::{address::Address as BTCAddress, key::PublicKey as BTCPublicKey},
+//};
 use bsv::{
     ChainParams, ExtendedPrivateKey, ExtendedPublicKey, P2PKHAddress, PrivateKey, PublicKey,
     Script, SigHash, Transaction, BSM, ECIES,
@@ -85,12 +89,20 @@ impl Wallet {
             .sum())
     }
 
-    fn wallet_xpriv(&self) -> Result<ExtendedPrivateKey> {
+    pub fn wallet_xpriv(&self) -> Result<ExtendedPrivateKey> {
         Ok(self.xpriv()?.derive_from_path("m/44'/0'/0'/0")?)
     }
 
     pub fn wallet_xpub(&self) -> Result<ExtendedPublicKey> {
         Ok(ExtendedPublicKey::from_xpriv(&self.wallet_xpriv()?))
+    }
+
+    pub fn taproot_xpriv(&self) -> Result<ExtendedPrivateKey> {
+        Ok(self.xpriv()?.derive_from_path("m/86'/0'/0'/0")?)
+    }
+
+    pub fn taproot_xpub(&self) -> Result<ExtendedPublicKey> {
+        Ok(ExtendedPublicKey::from_xpriv(&self.taproot_xpriv()?))
     }
 
     pub fn display_address(&self, network: &Networks) -> Result<String> {
@@ -101,6 +113,13 @@ impl Wallet {
         };
         Ok(address.set_chain_params(&params)?.to_string()?)
     }
+
+    //pub fn display_address_segwit(&self) -> Rsult<String> {
+    //let public_key =
+    //BTCPublicKey::from_slice(&self.wallet_xpub()?.get_public_key().to_bytes()?)?;
+    //let address = BTCAddress::p2wpkh(&public_key, BTCNetwork::Bitcoin)?;
+    //Ok(format!("{}", address))
+    //}
 
     pub async fn wallet_utxos(&self, network: &Networks) -> Result<Vec<UTXO>> {
         Ok(UTXO::from_metasync(&self.account_public_key()?, network).await?)
