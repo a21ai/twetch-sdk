@@ -11,9 +11,22 @@ pub struct UtxoDetectiveUTXO {
     pub path: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct UtxoDetectivePublicUtxo {
+    pub txid: String,
+    pub vout: u32,
+    pub satoshis: String,
+    pub block_height: i64,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct UtxoDetectiveUTXOResponse {
     pub utxos: Vec<UtxoDetectiveUTXO>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UtxoDetectiveBalance {
+    pub satoshis: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,7 +41,7 @@ pub struct UtxoDetectiveDecodeTxOutput {
     pub scripthash: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct UtxoDetectiveApi {
     url: String,
 }
@@ -46,6 +59,28 @@ impl UtxoDetectiveApi {
     pub fn get(&self, path: String) -> reqwest::RequestBuilder {
         let client = reqwest::Client::new();
         client.get(format!("{}{}", self.url, path))
+    }
+
+    pub async fn balance_by_address(&self, address: &String) -> Result<UtxoDetectiveBalance> {
+        let res = self
+            .get(format!("/balance/{}", address))
+            .send()
+            .await?
+            .json::<UtxoDetectiveBalance>()
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn utxos_by_address(&self, address: &String) -> Result<Vec<UtxoDetectivePublicUtxo>> {
+        let res = self
+            .get(format!("/utxos/{}", address))
+            .send()
+            .await?
+            .json::<Vec<UtxoDetectivePublicUtxo>>()
+            .await?;
+
+        Ok(res)
     }
 
     pub async fn decode_tx(&self, rawtx: String) -> Result<UtxoDetectiveDecodeTxResponse> {
