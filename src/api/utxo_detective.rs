@@ -35,6 +35,11 @@ pub struct UtxoDetectiveDecodeTxResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct UtxoDetectiveSpentOutpointResponse {
+    pub outpoints: Vec<Option<String>>,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UtxoDetectiveDecodeTxOutput {
     pub alias: Option<String>,
     pub satoshis: u64,
@@ -70,6 +75,34 @@ impl UtxoDetectiveApi {
             .await?;
 
         Ok(res)
+    }
+
+    pub async fn spends_by_outpoint(
+        &self,
+        outpoints: Vec<Vec<u8>>,
+    ) -> Result<Vec<Option<Vec<u8>>>> {
+        let payload = json!({
+            "outpoints": outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>()
+        });
+
+        let res = self
+            .post(format!("/spends/values"))
+            .json(&payload)
+            .send()
+            .await?
+            .json::<UtxoDetectiveSpentOutpointResponse>()
+            .await?;
+
+        let response = res
+            .outpoints
+            .iter()
+            .map(|e| match e {
+                Some(v) => Some(hex::decode(v).unwrap()),
+                None => None,
+            })
+            .collect::<Vec<_>>();
+
+        Ok(response)
     }
 
     pub async fn utxos_by_address(&self, address: &String) -> Result<Vec<UtxoDetectivePublicUtxo>> {

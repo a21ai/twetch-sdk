@@ -17,7 +17,7 @@ impl Post {
             return 0.00f64;
         }
 
-        let mut sum = 0.02f64;
+        let mut sum = 0.001f64;
 
         sum += match PayCommand::from_string(&self.description) {
             None => 0f64,
@@ -29,7 +29,7 @@ impl Post {
             Some(mentions) => mentions.estimate_usd,
         };
 
-        return format!("{:.1$}", sum, 2).parse::<f64>().unwrap();
+        return format!("{:.1$}", sum, 3).parse::<f64>().unwrap();
     }
 
     pub fn get_pay_command(&self, exchange_rate: f64) -> Option<String> {
