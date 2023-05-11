@@ -36,7 +36,13 @@ pub struct UtxoDetectiveDecodeTxResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct UtxoDetectiveSpentOutpointResponse {
-    pub outpoints: Vec<Option<String>>,
+    pub outpoints: Vec<Option<UtxoDetectiveSpentOutpointValueResponse>>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UtxoDetectiveSpentOutpointValueResponse {
+    pub h: i64,
+    pub o: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -80,7 +86,7 @@ impl UtxoDetectiveApi {
     pub async fn spends_by_outpoint(
         &self,
         outpoints: Vec<Vec<u8>>,
-    ) -> Result<Vec<Option<Vec<u8>>>> {
+    ) -> Result<Vec<Option<(Vec<u8>, i64)>>> {
         let payload = json!({
             "outpoints": outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>()
         });
@@ -97,7 +103,7 @@ impl UtxoDetectiveApi {
             .outpoints
             .iter()
             .map(|e| match e {
-                Some(v) => Some(hex::decode(v).unwrap()),
+                Some(v) => Some((hex::decode(&v.o).unwrap(), v.h)),
                 None => None,
             })
             .collect::<Vec<_>>();
