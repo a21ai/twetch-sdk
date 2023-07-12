@@ -16,7 +16,7 @@ pub struct UtxoDetectivePublicUtxo {
     pub txid: String,
     pub vout: u32,
     pub satoshis: String,
-    pub block_height: i64,
+    pub block_height: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
