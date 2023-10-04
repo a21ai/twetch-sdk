@@ -99,6 +99,22 @@ impl UtxoDetectiveApi {
         Ok(res)
     }
 
+    pub async fn mempool_spends(&self, outpoints: Vec<Vec<u8>>) -> Result<Vec<bool>> {
+        let payload = json!({
+            "outpoints": outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>()
+        });
+
+        let res = self
+            .post(format!("/mempool/spends"))
+            .json(&payload)
+            .send()
+            .await?
+            .json::<Vec<bool>>()
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn spends_by_outpoint(
         &self,
         outpoints: Vec<Vec<u8>>,
