@@ -65,7 +65,7 @@ impl TxBuilder {
 
             if !tx_out
                 .get_script_pub_key_hex()
-                .contains(&wallet.account_address()?.get_locking_script()?.to_hex())
+                .contains(&wallet.account_locking_script()?.to_hex())
             {
                 cost = cost + tx_out.get_satoshis();
             }
@@ -244,10 +244,7 @@ impl TxBuilder {
 
         let change_script = match &builder.change_address {
             Some(v) => v.get_locking_script()?,
-            None => match wallet.resolve_change_address().await {
-                Ok(v) => v,
-                Err(_) => anyhow::bail!("failed to resolve change address"),
-            },
+            None => wallet.account_locking_script()?,
         };
 
         let mut tx = match &builder.extended_tx {

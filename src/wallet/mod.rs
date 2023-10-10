@@ -76,6 +76,10 @@ impl Wallet {
         Ok(self.account_public_key()?.to_p2pkh_address()?)
     }
 
+    pub fn account_locking_script(&self) -> Result<Script> {
+        Ok(self.account_address()?.get_locking_script()?)
+    }
+
     pub async fn account_utxos(&self, network: &Networks) -> Result<Vec<UTXO>> {
         Ok(UTXO::from_woc(&self.account_address()?, network).await?)
     }
@@ -164,16 +168,6 @@ impl Wallet {
             }
         }
     }
-    pub async fn resolve_change_address(&self) -> Result<Script> {
-        if let Some(user_id) = &self.user_id {
-            let metasync = MetasyncApi::new(constants::METASYNC_URL.to_string());
-            let payment_destination = metasync
-                .payment_destination(&format!("{}@twetch.me", user_id), None)
-                .await?;
-            return Ok(Script::from_hex(&payment_destination.outputs[0].script)?);
-        }
-        return Ok(self.account_address()?.get_locking_script()?);
-    }
 
     pub fn sign_message(&self, message: String) -> Result<String> {
         let private_key = self.account_xpriv()?.get_private_key();
@@ -185,7 +179,7 @@ impl Wallet {
         let mut typed_signers = Vec::new();
         for _ in &typed_signing.signatures {
             typed_signers.push(TypedSigner {
-                target: self.account_address()?.get_locking_script()?.to_bytes(),
+                target: self.account_locking_script()?.to_bytes(),
                 pub_key: Some(self.account_public_key()?),
                 priv_key: Some(self.account_private_key()?),
                 r: None,
