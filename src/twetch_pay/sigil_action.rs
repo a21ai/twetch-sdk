@@ -92,7 +92,7 @@ impl SigilAction {
 
                     contract.abi(brc721::basic::ABI::Purchase(
                         uto,
-                        wallet.account_address()?.get_locking_script()?,
+                        wallet.account_locking_script()?,
                         params[1].clone().into(),
                         satoshis,
                     ))?
