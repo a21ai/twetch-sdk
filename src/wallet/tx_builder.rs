@@ -136,7 +136,7 @@ impl TxBuilder {
                 {
                     payment_destination = Some(PaymentDestination {
                         paymail: to.clone(),
-                        reference: "-1".to_string(),
+                        reference: p2p_payment_destination.reference,
                     });
 
                     for o in p2p_payment_destination.outputs.iter() {
