@@ -136,7 +136,7 @@ impl TxBuilder {
                 {
                     payment_destination = Some(PaymentDestination {
                         paymail: to.clone(),
-                        reference: p2p_payment_destination.reference,
+                        reference: "-1".to_string(),
                     });
 
                     for o in p2p_payment_destination.outputs.iter() {
@@ -242,10 +242,7 @@ impl TxBuilder {
         let mut nfts: Vec<String> = Vec::new();
         let mut typed_signing: Option<TypedSigning> = None;
 
-        let change_script = match &builder.change_address {
-            Some(v) => v.get_locking_script()?,
-            None => wallet.account_locking_script()?,
-        };
+        let change_script = wallet.account_locking_script()?;
 
         let mut tx = match &builder.extended_tx {
             Some(v) => Transaction::from_compact_hex(v)?,
@@ -326,7 +323,7 @@ impl TxBuilder {
             );
 
             for utxo in &wallet_utxos {
-                if input_sats < output_sats + 100000 {
+                if input_sats < output_sats + 100000 || utxo.path > -1 {
                     input_sats += utxo.satoshis;
                     utxos.push(Some(utxo.clone()));
                     tx.add_input(&TxIn::new(
@@ -335,8 +332,6 @@ impl TxBuilder {
                         &Script::default(),
                         None,
                     ))
-                } else {
-                    break;
                 }
             }
         }
