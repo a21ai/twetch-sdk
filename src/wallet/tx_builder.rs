@@ -322,8 +322,22 @@ impl TxBuilder {
                 )
             );
 
-            for utxo in &wallet_utxos {
-                if input_sats < output_sats + 100000 || utxo.path > -1 {
+            let (paymail_utxos, account_utxos): (Vec<UTXO>, Vec<UTXO>) =
+                wallet_utxos.into_iter().partition(|v| v.path != -1);
+
+            for utxo in &paymail_utxos {
+                input_sats += utxo.satoshis;
+                utxos.push(Some(utxo.clone()));
+                tx.add_input(&TxIn::new(
+                    &hex::decode(utxo.txid.clone()).unwrap(),
+                    utxo.vout,
+                    &Script::default(),
+                    None,
+                ))
+            }
+
+            for utxo in &account_utxos {
+                if input_sats < output_sats + 100000 {
                     input_sats += utxo.satoshis;
                     utxos.push(Some(utxo.clone()));
                     tx.add_input(&TxIn::new(
