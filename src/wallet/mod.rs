@@ -49,7 +49,7 @@ impl Wallet {
         })
     }
 
-    fn xpriv(&self) -> Result<ExtendedPrivateKey> {
+    pub fn xpriv(&self) -> Result<ExtendedPrivateKey> {
         Ok(ExtendedPrivateKey::from_mnemonic(
             self.seed.as_bytes(),
             None,
