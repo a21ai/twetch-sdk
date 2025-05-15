@@ -11,7 +11,7 @@ pub struct UtxoDetectiveUTXO {
     pub path: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct UtxoDetectivePublicUtxo {
     pub txid: String,
     pub vout: u32,
@@ -52,7 +52,7 @@ pub struct UtxoDetectiveDecodeTxOutput {
     pub scripthash: String,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UtxoDetectiveApi {
     url: String,
 }
@@ -113,6 +113,53 @@ impl UtxoDetectiveApi {
             .await?;
 
         Ok(res)
+    }
+    
+    pub async fn mempool_check(
+        &self,
+        outpoints: Vec<Vec<u8>>,
+        address: Option<String>
+    ) -> Result<(Vec<bool>, Vec<UtxoDetectivePublicUtxo>)> {
+        let mut payload = json!({});
+        
+        if !outpoints.is_empty() {
+            payload["outpoints"] = json!(outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>());
+        }
+        
+        if let Some(addr) = address {
+            payload["address"] = json!(addr);
+        }
+
+        let res = self
+            .post(format!("/mempool"))
+            .json(&payload)
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+            
+        let spent = res["spent"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .map(|v| v.as_bool().unwrap_or(false))
+                    .collect::<Vec<bool>>()
+            })
+            .unwrap_or_default();
+            
+        let new_utxos = res["new_utxos"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .map(|v| {
+                        serde_json::from_value::<UtxoDetectivePublicUtxo>(v.clone())
+                            .unwrap_or_default()
+                    })
+                    .collect::<Vec<UtxoDetectivePublicUtxo>>()
+            })
+            .unwrap_or_default();
+
+        Ok((spent, new_utxos))
     }
 
     pub async fn spends_by_outpoint(
