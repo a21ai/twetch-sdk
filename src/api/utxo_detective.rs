@@ -115,6 +115,12 @@ impl UtxoDetectiveApi {
         Ok(res)
     }
     
+#[derive(Debug, Deserialize)]
+pub struct MempoolCheckResponse {
+    pub spent: Vec<bool>,
+    pub new_utxos: Vec<UtxoDetectivePublicUtxo>,
+}
+
     pub async fn mempool_check(
         &self,
         outpoints: Vec<Vec<u8>>,
@@ -130,36 +136,15 @@ impl UtxoDetectiveApi {
             payload["address"] = json!(addr);
         }
 
-        let res = self
+        let response = self
             .post(format!("/mempool"))
             .json(&payload)
             .send()
             .await?
-            .json::<Value>()
+            .json::<MempoolCheckResponse>()
             .await?;
             
-        let spent = res["spent"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|v| v.as_bool().unwrap_or(false))
-                    .collect::<Vec<bool>>()
-            })
-            .unwrap_or_default();
-            
-        let new_utxos = res["new_utxos"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|v| {
-                        serde_json::from_value::<UtxoDetectivePublicUtxo>(v.clone())
-                            .unwrap_or_default()
-                    })
-                    .collect::<Vec<UtxoDetectivePublicUtxo>>()
-            })
-            .unwrap_or_default();
-
-        Ok((spent, new_utxos))
+        Ok((response.spent, response.new_utxos))
     }
 
     pub async fn spends_by_outpoint(
