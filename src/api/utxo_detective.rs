@@ -52,6 +52,12 @@ pub struct UtxoDetectiveDecodeTxOutput {
     pub scripthash: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct MempoolCheckResponse {
+    pub spent: Vec<bool>,
+    pub new_utxos: Vec<UtxoDetectivePublicUtxo>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UtxoDetectiveApi {
     url: String,
@@ -114,24 +120,19 @@ impl UtxoDetectiveApi {
 
         Ok(res)
     }
-    
-#[derive(Debug, Deserialize)]
-pub struct MempoolCheckResponse {
-    pub spent: Vec<bool>,
-    pub new_utxos: Vec<UtxoDetectivePublicUtxo>,
-}
 
     pub async fn mempool_check(
         &self,
         outpoints: Vec<Vec<u8>>,
-        address: Option<String>
+        address: Option<String>,
     ) -> Result<(Vec<bool>, Vec<UtxoDetectivePublicUtxo>)> {
         let mut payload = json!({});
-        
+
         if !outpoints.is_empty() {
-            payload["outpoints"] = json!(outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>());
+            payload["outpoints"] =
+                json!(outpoints.iter().map(|e| hex::encode(e)).collect::<Vec<_>>());
         }
-        
+
         if let Some(addr) = address {
             payload["address"] = json!(addr);
         }
@@ -143,7 +144,7 @@ pub struct MempoolCheckResponse {
             .await?
             .json::<MempoolCheckResponse>()
             .await?;
-            
+
         Ok((response.spent, response.new_utxos))
     }
 
